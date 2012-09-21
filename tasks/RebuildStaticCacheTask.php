@@ -1,26 +1,10 @@
 <?php
 /**
- * @package cms
- * @subpackage tasks
- * 
- * @todo Make this use the Task interface once it gets merged back into trunk
+ * @package static
  */ 
-class RebuildStaticCacheTask extends Controller {
+class RebuildStaticCacheTask extends BuildTask {
 
-	static $allowed_actions = array(
-		'index', 
-	);
-
-	function init() {
-		parent::init();
-		
-		Versioned::reading_stage('live');
-
-		$canAccess = (Director::isDev() || Director::is_cli() || Permission::check("ADMIN"));
-		if(!$canAccess) return Security::permissionFailure($this);
-	}
-
-	function index() {
+	public function run($request) {
 		StaticPublisher::set_echo_progress(true);
 
 		$page = singleton('Page');
@@ -97,6 +81,7 @@ class RebuildStaticCacheTask extends Controller {
 				foreach(glob(BASE_PATH . '/cache/*', GLOB_ONLYDIR) as $cacheDir) {
 					foreach(glob($cacheDir.'/*') as $cacheFile) {
 						$searchCacheFile = trim(str_replace($cacheBaseDir, '', $cacheFile), '\/');
+						
 						if (!in_array($searchCacheFile, $mappedUrls)) {
 							echo " * Deleting $cacheFile\n";
 							@unlink($cacheFile);
@@ -115,12 +100,5 @@ class RebuildStaticCacheTask extends Controller {
 		if (file_exists($cacheBaseDir.'/lock')) unlink($cacheBaseDir.'/lock');
 		
 		echo "\n\n== Done! ==";
-	}
-	
-	function show() {
-		$urls = singleton('Page')->allPagesToCache();
-		echo "<pre>\n";
-		print_r($urls);
-		echo "\n</pre>";
 	}
 }
