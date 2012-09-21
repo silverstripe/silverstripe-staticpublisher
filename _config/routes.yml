@@ -1,0 +1,11 @@
+---
+Name: staticroutes
+Before: '*'
+After:
+  - '#rootroutes'
+  - '#coreroutes'
+  - '#modelascontrollerroutes'
+---
+Director:
+  rules:
+    'dev/buildcache/$Action': 'RebuildStaticCacheTask'
