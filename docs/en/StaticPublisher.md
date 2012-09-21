@@ -54,7 +54,6 @@ to generate folders and HTML-files.
 	  }
 	
 	 /**
-	
 	   * Get a list of URLs to cache related to this page
 	   */
 	  public function subPagesToCache() {
