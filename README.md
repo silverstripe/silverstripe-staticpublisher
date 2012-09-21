@@ -3,7 +3,7 @@
 ## Introduction
 
 Static provides several extensions for exporting a SilverStripe application to
-both local or remote file systems
+both local or remote file systems.
 
 ## Maintainer Contact
 
@@ -14,5 +14,9 @@ both local or remote file systems
 
  * SilverStripe 3.1
  * Tar archive
+
+## Documentation
+
+See docs/
 
 Note this is untested on Windows.
