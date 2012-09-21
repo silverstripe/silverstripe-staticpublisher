@@ -2,8 +2,8 @@
 /**
  * This file is designed to be the new 'server' of sites using StaticPublisher.
  * to use this, you need to modify your .htaccess to point all requests to
- * static-main.php, rather than main.php. This file also allows for using
- * static publisher with the subsites module.
+ * static/main.php, rather than framework/main.php. This file also allows for 
+ * using static publisher with the subsites module.
  *
  * If you are using StaticPublisher+Subsites, set the following in _config.php:
  *
@@ -31,6 +31,12 @@ $hostmapLocation = '../subsites/host-map.php';
 // Specific to 'homepagefordomain' module
 $homepageMapLocation = '../assets/_homepage-map.php';
 
+
+function skipCache() {
+	require_once('../framework/core/Core.php');
+	require_once('../framework/main.php');
+}
+
 if (
 	$cacheEnabled 
 	&& empty($_COOKIE['bypassStaticCache'])
@@ -42,8 +48,8 @@ if (
 ) {
 	// Define system paths (copied from Core.php)
 	if(!defined('BASE_PATH')) {
-		// Assuming that this file is framework/static-main.php we can then determine the base path
-		define('BASE_PATH', rtrim(dirname(dirname(dirname(__FILE__)))), DIRECTORY_SEPARATOR);
+		// Assuming that this file is static/main.php we can then determine the base path
+		define('BASE_PATH', rtrim(dirname(dirname(__FILE__))), DIRECTORY_SEPARATOR);
 	}
 	if(!defined('BASE_URL')) {
 		// Determine the base URL by comparing SCRIPT_NAME to SCRIPT_FILENAME and getting common elements
@@ -74,6 +80,7 @@ if (
 	// Custom mapping through PHP file (assumed FilesystemPublisher::$domain_based_mapping=TRUE)
 	else if (file_exists($hostmapLocation)) {
 		include_once $hostmapLocation;
+
 		$subsiteHostmap['default'] = isset($subsiteHostmap['default']) ? $subsiteHostmap['default'] : '';
 		$cacheDir = (isset($subsiteHostmap[$host]) ? $subsiteHostmap[$host] : $subsiteHostmap['default']) . '/';
 	}
@@ -89,6 +96,7 @@ if (
 	// Route to the 'correct' index file (if applicable)
 	if ($file == 'index' && file_exists($homepageMapLocation)) {
 		include_once $homepageMapLocation;
+
 		$file = isset($homepageMap[$_SERVER['HTTP_HOST']]) ? $homepageMap[$_SERVER['HTTP_HOST']] : $file;
 	}
 	
@@ -100,19 +108,27 @@ if (
 	if (file_exists($cacheBaseDir . $cacheDir . $file . '.html')) {
 		header('X-SilverStripe-Cache: hit at '.@date('r'));
 		echo file_get_contents($cacheBaseDir . $cacheDir . $file . '.html');
-		if ($cacheDebug) echo "<h1>File was cached</h1>";
+		if ($cacheDebug) {
+			echo "<h1>File was cached</h1>";
+		}
+
 	} elseif (file_exists($cacheBaseDir . $cacheDir . $file . '.php')) {
 		header('X-SilverStripe-Cache: hit at '.@date('r'));
+
 		include_once $cacheBaseDir . $cacheDir . $file . '.php';
-		if ($cacheDebug) echo "<h1>File was cached</h1>";
+
+		if ($cacheDebug) {
+			echo "<h1>File was cached</h1>";
+		}
 	} else {
 		header('X-SilverStripe-Cache: miss at '.@date('r') . ' on ' . $cacheDir . $file);
-		// No cache hit... fallback to dynamic routing
-		include 'main.php';
+
+		skipCache();
+
 		if ($cacheDebug) echo "<h1>File was NOT cached</h1>";
 	}
 } else {
 	// Fall back to dynamic generation via normal routing if caching has been explicitly disabled
-	include 'main.php';
+	skipCache();
 }
 

@@ -1,0 +1,6 @@
+<FilesMatch "\.(php|php3|php4|php5|phtml|inc)$">
+	Deny from all
+</FilesMatch>
+<FilesMatch "(main)\.php$">
+	Allow from all
+</FilesMatch>
