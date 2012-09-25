@@ -1,9 +1,9 @@
-# Static
+# StaticPublisher
 
 ## Introduction
 
-Static provides several extensions for exporting a SilverStripe application to
-both local or remote file systems.
+This module provides an extension for exporting a SilverStripe application as 
+static files to both a local or remote server for increased site performance.
 
 ## Maintainer Contact
 
@@ -17,6 +17,6 @@ both local or remote file systems.
 
 ## Documentation
 
-See docs/
+See the docs folder.
 
 Note this is untested on Windows.

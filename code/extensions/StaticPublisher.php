@@ -1,41 +1,63 @@
 <?php
 /**
- * @package cms
- * @subpackage publishers
+ * @package staticpublisher
  */
 abstract class StaticPublisher extends DataExtension {
 	/**
 	 * Defines whether to output information about publishing or not. By 
 	 * default, this is off, and should be turned on when you want debugging 
-	 * (for example, in a cron task)
+	 * (for example, in a cron task).
+	 *
+	 * @var boolean
 	 */
-	static $echo_progress = false;
+	protected static $echo_progress = false;
 	
 	/**
-	 * Realtime static publishing... the second a page
-    * is saved, it is written to the cache 
+	 * Realtime static publishing... the second a page is saved, it is 
+	 * written to the cache.
+	 *
+	 * @var boolean
 	 */
-	static $disable_realtime = false;
+	public static $disable_realtime = false;
 	
-	/*
-	 * This is the current static publishing theme, which can be set at any point
-	 * If it's not set, then the last non-null theme, set via SSViewer::set_theme() is used
-	 * The obvious place to set this is in _config.php
+	/**
+	 * This is the current static publishing theme, which can be set at any 
+	 * point. If it's not set, then the last non-null theme, set via 
+	 * SSViewer::set_theme() is used. The obvious place to set this is in 
+	 * _config.php
+	 *
+	 * @var string
 	 */
-	static $static_publisher_theme=false;
+	protected static $static_publisher_theme=false;
 	
+	/**
+	 * @param array
+	 */
 	abstract function publishPages($pages);
+
+	/**
+	 * @param array
+	 */
 	abstract function unpublishPages($pages);
 
-	static function set_static_publisher_theme($theme){
+	/**
+	 * @param string
+	 */
+	public static function set_static_publisher_theme($theme) {
 		self::$static_publisher_theme=$theme;
 	}
 	
-	static function static_publisher_theme(){
+	/**
+	 * @return string
+	 */
+	public static function static_publisher_theme() {
 		return self::$static_publisher_theme;
 	}
 
-	static function echo_progress() {
+	/**
+	 * @return boolean
+	 */
+	public static function echo_progress() {
 		return (boolean)self::$echo_progress;
 	}
 	
@@ -43,28 +65,30 @@ abstract class StaticPublisher extends DataExtension {
 	 * Either turns on (boolean true) or off (boolean false) the progress indicators.
 	 * @see StaticPublisher::$echo_progress
 	 */
-	static function set_echo_progress($progress) {
+	public static function set_echo_progress($progress) {
 		self::$echo_progress = (boolean)$progress;
 	}
 
 	/**
 	 * Called after a page is published.
+	 *
+	 * @param SiteTree
 	 */
-	function onAfterPublish($original) {
+	public function onAfterPublish($original) {
 		$this->republish($original);
 	}
 	
 	/**
-	 * Called after link assets have been renamed, and the live site has been updated, without
-	 * an actual publish event.
+	 * Called after link assets have been renamed, and the live site has been 
+	 * updated, without an actual publish event.
 	 * 
 	 * Only called if the published content exists and has been modified.
 	 */
-	function onRenameLinkedAsset($original) {
+	public function onRenameLinkedAsset($original) {
 		$this->republish($original);
 	}
 	
-	function republish($original) {
+	public function republish($original) {
 		if (self::$disable_realtime) return;
 
 		$urls = array();
@@ -99,10 +123,9 @@ abstract class StaticPublisher extends DataExtension {
 	}
 	
 	/**
-	 * On after unpublish, get changes and hook into underlying
-	 * functionality
+	 * Get changes and hook into underlying functionality.
 	 */
-	function onAfterUnpublish($page) {
+	public function onAfterUnpublish($page) {
 		if (self::$disable_realtime) return;
 		
 		// Get the affected URLs
@@ -125,12 +148,11 @@ abstract class StaticPublisher extends DataExtension {
 	/**
 	 * Get all external references to CSS, JS, 
 	 */
-	function externalReferencesFor($content) {
+	public function externalReferencesFor($content) {
 		$CLI_content = escapeshellarg($content);
 		$tidy = `echo $CLI_content | tidy -numeric -asxhtml`;
 		$tidy = preg_replace('/xmlns="[^"]+"/','', $tidy);
 		$xContent = new SimpleXMLElement($tidy);
-		//Debug::message($xContent->asXML());
 		
 		$xlinks = array(
 			"//link[@rel='stylesheet']/@href" => false,
@@ -140,6 +162,7 @@ abstract class StaticPublisher extends DataExtension {
 		);
 		
 		$urls = array();
+
 		foreach($xlinks as $xlink => $assetsOnly) {
 			$matches = $xContent->xpath($xlink);
 			if($matches) foreach($matches as $item) {
@@ -152,6 +175,4 @@ abstract class StaticPublisher extends DataExtension {
 		
 		return $urls;		
 	}
-
 }
-

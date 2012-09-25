@@ -1,6 +1,6 @@
 <?php
 /**
- * @package static
+ * @package staticpublisher
  */ 
 class RebuildStaticCacheTask extends BuildTask {
 

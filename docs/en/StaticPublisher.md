@@ -177,7 +177,7 @@ your dev environment).
 	RewriteCond %{REQUEST_URI} !(\.gif)|(\.jpg)|(\.png)|(\.css)|(\.js)|(\.php)$
 	RewriteCond %{REQUEST_URI} ^(.*)$
 	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* static/code/main.php?url=%1&%{QUERY_STRING} [L]
+	RewriteRule .* staticpublisher/code/main.php?url=%1&%{QUERY_STRING} [L]
 	### SILVERSTRIPE END ###
 
 
@@ -190,7 +190,7 @@ Just look for this line:
 
 And change the PHP script from main.php to static-main.php:
 
-	RewriteRule .* static/code/main.php?url=%1&%{QUERY_STRING} [L]
+	RewriteRule .* staticpublisher/code/main.php?url=%1&%{QUERY_STRING} [L]
 
 ## Using Static Publisher With Subsites Module
 

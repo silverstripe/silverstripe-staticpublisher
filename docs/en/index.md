@@ -1,10 +1,10 @@
-# Static
+# StaticPublisher
 
-Static is a module providing extensions to SilverStripe to allow developers to
-generate static exports of their SilverStripe sites either for performance or 
-as a backup system.
+StaticPublisher is a module providing an extension to SilverStripe to allow 
+developers to generate static exports of their SilverStripe sites either 
+for performance or as a backup system.
 
-There are two main parts to the module
+There are two extensions provided by the module:
 
 ## Static Publisher
 

@@ -12,7 +12,7 @@
  * 
  * @see StaticPublisher
  *
- * @package static
+ * @package staticpublisher
  */
 class StaticExporter extends Controller {
 

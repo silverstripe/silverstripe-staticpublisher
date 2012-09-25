@@ -1,19 +1,7 @@
 <?php
 
 /**
- * Usage: Object::add_extension("SiteTree", "FilesystemPublisher('static-folder', 'html')");
- * 
- * Usage: To work with Subsite module you need to:
- * - Add FilesystemPublisher::$domain_based_caching = true; in mysite/_config.php
- * - Added main site host mapping in subsites/host-map.php after everytime a new subsite is created or modified 
- *
- * You may also have a method $page->pagesAffectedByUnpublishing() to return other URLS
- * that should be de-cached if $page is unpublished.
- *
- * @see http://doc.silverstripe.com/doku.php?id=staticpublisher
- * 
- * @package cms
- * @subpackage publishers
+ * @package staticpublisher
  */
 class FilesystemPublisher extends StaticPublisher {
 

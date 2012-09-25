@@ -2,7 +2,7 @@
 /**
  * Tests for the {@link FilesystemPublisher} class.
  * 
- * @package static
+ * @package staticpublisher
  */
 class FilesystemPublisherTest extends SapphireTest {
 	

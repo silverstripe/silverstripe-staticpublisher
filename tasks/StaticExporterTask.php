@@ -1,6 +1,6 @@
 <?php
 /**
- * @package static
+ * @package staticpublisher
  */
 class StaticExporterTask extends BuildTask {
 
