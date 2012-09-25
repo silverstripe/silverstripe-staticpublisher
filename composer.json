@@ -1,0 +1,17 @@
+{
+	"name": "silverstripe-labs/staticpublisher",
+	"description":  "StaticPublisher provides an extensions for exporting a SilverStripe application to
+		either a local or remote file systems.",
+	"type": "silverstripe-module",
+	"keywords": ["silverstripe-labs", "static", "export", "publisher"],
+	"authors": [{
+		"name": "Will Rossiter",
+		"email": "will@fullscreen.io"
+	}, {
+		"name": "Sam Minnée",
+		"email": "sam@silverstripe.com"
+	}],
+	"require": {
+		"silverstripe/framework": ">=3.1"
+	}
+}
