@@ -1,5 +1,7 @@
 # StaticPublisher
 
+[![Build Status](https://secure.travis-ci.org/silverstripe-labs/silverstripe-staticpublisher.png?branch=master)](http://travis-ci.org/silverstripe-labs/silverstripe-staticpublisher)
+
 ## Introduction
 
 This module provides an extension for exporting a SilverStripe application as 
