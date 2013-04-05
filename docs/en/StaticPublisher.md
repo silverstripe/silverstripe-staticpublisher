@@ -28,20 +28,31 @@ which time they are considered outdated. By adding a custom method
 caching, and hook in custom logic. This array of URLs is used by the publisher 
 to generate folders and HTML-files.
 
+First add the FilesystemPublisher extension to your object. See the
+[DataExtension](http://doc.silverstripe.org/framework/en/reference/dataextension)
+documentation for more ways to add the extension to your SiteTree.
+
+	:::php
+	SiteTree::add_extension("FilesystemPublisher('cache/')");
+
+Once you've added the extension, define the pages you would like to cache from
+your Page class:
+
 	:::php
 	class Page extends SiteTree {
 	  // ...
 	
 	  /**
-	
 	   * Return a list of all the pages to cache
+	   *
+	   * @return array
 	   */
 	  public function allPagesToCache() {
 	    // Get each page type to define its sub-urls
 	    $urls = array();
 	
 	    // memory intensive depending on number of pages
-	    $pages = SiteTree::get();
+	    $pages = Page::get();
 	
 	    foreach($pages as $page) {
 	      $urls = array_merge($urls, (array)$page->subPagesToCache());
@@ -54,7 +65,9 @@ to generate folders and HTML-files.
 	  }
 	
 	 /**
-	   * Get a list of URLs to cache related to this page
+	   * Get a list of URLs to cache related to this page.
+	   *
+	   * @return array
 	   */
 	  public function subPagesToCache() {
 	    $urls = array();
@@ -64,17 +77,22 @@ to generate folders and HTML-files.
 	    
 	    // cache the RSS feed if comments are enabled
 	    if ($this->ProvideComments) {
-	      $urls[] = Director::absoluteBaseURL() . "pagecomment/rss/" . $this->ID;
+	      $urls[] = Director::absoluteBaseURL() . "CommentingController/rss/SiteTree/" . $this->ID;
 	    }
 	    
 	    return $urls;
 	  }
 	  
+	  /**
+	   * Get a list of URL's to publish when this page changes
+	   */
 	  public function pagesAffectedByChanges() {
 	    $urls = $this->subPagesToCache();
 	    if($p = $this->Parent) $urls = array_merge((array)$urls, (array)$p->subPagesToCache());
 	    return $urls;
 	  }
+
+
 	}
 
 ## Excluding Pages
