@@ -16,7 +16,7 @@
  */
 class StaticExporter extends Controller {
 
-	public static $allowed_actions = array(
+	private static $allowed_actions = array(
 		'index', 
 		'export', 
 		'StaticExportForm'
@@ -56,6 +56,8 @@ class StaticExporter extends Controller {
 		if(isset($_REQUEST['baseurl'])) {
 			$base = $_REQUEST['baseurl'];
 			if(substr($base,-1) != '/') $base .= '/';
+
+			Config::inst()->update('Director', 'alternate_base_url', $base);
 		}
 		else {
 			$base = Director::baseURL();
@@ -94,7 +96,8 @@ class StaticExporter extends Controller {
 	 */
 	public function doExport($base, $folder, $symlink = true, $quiet = true) {
 		ini_set('max_execution_time', 0);
-		Director::setBaseURL($base);
+
+		Config::inst()->update('Director', 'alternate_base_url', $base);
 
 		if(is_dir($folder)) {
 			Filesystem::removeFolder($folder);

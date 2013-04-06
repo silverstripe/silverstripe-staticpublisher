@@ -17,31 +17,30 @@ class FilesystemPublisher extends StaticPublisher {
 	
 	/**
 	 * @var string
+	 * @config
 	 */
-	protected static $static_base_url = null;
+	private static $static_base_url = null;
 	
 	/**
-	 * Use domain based caching (put cache files into a domain subfolder).
+	 * @config
 	 *
+	 * @var Boolean Use domain based cacheing (put cache files into a domain subfolder)
 	 * This must be true if you are using this with the "subsites" module.
-	 *
 	 * Please note that this form of caching requires all URLs to be provided absolute
 	 * (not relative to the webroot) via {@link SiteTree->AbsoluteLink()}.
-	 *
-	 * @var boolean
 	 */
-	public static $domain_based_caching = false;
+	private static $domain_based_caching = false;
 	
 	/**
 	 * Set a different base URL for the static copy of the site.
+	 * This can be useful if you are running the CMS on a different domain from the website.
 	 *
-	 * This can be useful if you are running the CMS on a different domain 
-	 * from the website.
-	 *
-	 * @param string
+	 * @deprecated 3.2 Use the "FilesystemPublisher.static_base_url" config setting instead
 	 */
-	public static function set_static_base_url($url) {
-		self::$static_base_url = $url;
+	static public function set_static_base_url($url) {
+		Deprecation::notice('3.2', 'Use the "FilesystemPublisher.static_base_url" config setting instead');
+
+		Config::inst()->update('FilesystemPublisher', 'static_base_url', $url);
 	}
 	
 	/**
@@ -54,7 +53,9 @@ class FilesystemPublisher extends StaticPublisher {
 	 */
 	public function __construct($destFolder = 'cache', $fileExtension = null) {
 		// Remove trailing slash from folder
-		if(substr($destFolder, -1) == '/') $destFolder = substr($destFolder, 0, -1);
+		if(substr($destFolder, -1) == '/') {
+			$destFolder = substr($destFolder, 0, -1);
+		}
 		
 		$this->destFolder = $destFolder;
 		$this->fileExtension = $fileExtension;
@@ -64,19 +65,16 @@ class FilesystemPublisher extends StaticPublisher {
 	
 	/**
 	 * Transforms relative or absolute URLs to their static path equivalent.
-	 *
 	 * This needs to be the same logic that's used to look up these paths through
-	 * static-main.php. Does not include the {@link $destFolder} prefix.
+	 * framework/static-main.php. Does not include the {@link $destFolder} prefix.
 	 * 
-	 * URL filtering will have already taken place for direct SiteTree links via 
-	 * SiteTree->generateURLSegment()). For all other links (e.g. custom 
-	 * controller actions), we assume that they're pre-sanitized to suit the 
-	 * filesystem needs, as its impossible to sanitize them without risking to 
-	 * break the underlying naming assumptions in URL routing (e.g. controller 
-	 * method names).
+	 * URL filtering will have already taken place for direct SiteTree links via SiteTree->generateURLSegment()).
+	 * For all other links (e.g. custom controller actions), we assume that they're pre-sanitized
+	 * to suit the filesystem needs, as its impossible to sanitize them without risking to break
+	 * the underlying naming assumptions in URL routing (e.g. controller method names).
 	 * 
 	 * Examples (without $domain_based_caching):
-	 *  - http://mysite.com/mywebroot/ => /index.html
+	 *  - http://mysite.com/mywebroot/ => /index.html (assuming your webroot is in a subfolder)
 	 *  - http://mysite.com/about-us => /about-us.html
 	 *  - http://mysite.com/parent/child => /parent/child.html
 	 * 
@@ -87,12 +85,11 @@ class FilesystemPublisher extends StaticPublisher {
 	 *  - http://subdomain.mysite.com/parent/child => /subdomain.mysite.com/parent/child.html
 	 * 
 	 * @param array $urls Absolute or relative URLs
-	 *
-	 * @return array Map of original URLs to file system paths (relative to {@link $destFolder}).
+	 * @return array Map of original URLs to filesystem paths (relative to {@link $destFolder}).
 	 */
 	public function urlsToPaths($urls) {
 		$mappedUrls = array();
-
+		
 		foreach($urls as $url) {
 
 			// parse_url() is not multibyte safe, see https://bugs.php.net/bug.php?id=52923.
@@ -113,7 +110,7 @@ class FilesystemPublisher extends StaticPublisher {
 
 			$filename = $urlSegment ? "$urlSegment.$this->fileExtension" : "index.$this->fileExtension";
 
-			if (self::$domain_based_caching) {
+			if (Config::inst()->get('FilesystemPublisher', 'domain_based_caching')) {
 				if (!$urlParts) continue; // seriously malformed url here...
 				$filename = $urlParts['host'] . '/' . $filename;
 			}
@@ -124,6 +121,9 @@ class FilesystemPublisher extends StaticPublisher {
 		return $mappedUrls;
 	}
 	
+	/**
+	 * @param array $urls
+	 */
 	public function unpublishPages($urls) {
 		// Do we need to map these?
 		// Detect a numerically indexed arrays
@@ -143,7 +143,19 @@ class FilesystemPublisher extends StaticPublisher {
 		}
 	}
 	
+	/**
+ 	 * Uses {@link Director::test()} to perform in-memory HTTP requests
+ 	 * on the passed-in URLs.
+ 	 * 
+ 	 * @param  array $urls Relative URLs 
+ 	 * @return array Result, keyed by URL. Keys: 
+ 	 *               - "statuscode": The HTTP status code
+ 	 *               - "redirect": A redirect location (if applicable)
+ 	 *               - "path": The filesystem path where the cache has been written
+ 	 */
 	public function publishPages($urls) { 
+		$result = array();
+
 		// Do we need to map these?
 		// Detect a numerically indexed arrays
 		if (is_numeric(join('', array_keys($urls)))) $urls = $this->urlsToPaths($urls);
@@ -156,22 +168,37 @@ class FilesystemPublisher extends StaticPublisher {
 		// Set the appropriate theme for this publication batch.
 		// This may have been set explicitly via StaticPublisher::static_publisher_theme,
 		// or we can use the last non-null theme.
-		if(!StaticPublisher::static_publisher_theme())
-			SSViewer::set_theme(SSViewer::current_custom_theme());
-		else
-			SSViewer::set_theme(StaticPublisher::static_publisher_theme());
+		$customTheme = Config::inst()->get('StaticPublisher', 'static_publisher_theme');
+		if(!$customTheme) {
+			Config::inst()->update('SSViewer', 'theme', Config::inst()->get('SSViewer', 'custom_theme'));
+		} else {
+			Config::inst()->update('SSViewer', 'theme', $customTheme);
+		}
 			
 		$currentBaseURL = Director::baseURL();
-		if(self::$static_base_url) Director::setBaseURL(self::$static_base_url);
-		if($this->fileExtension == 'php') SSViewer::setOption('rewriteHashlinks', 'php'); 
-		if(StaticPublisher::echo_progress()) echo $this->class.": Publishing to " . self::$static_base_url . "\n";		
+		$staticBaseUrl = Config::inst()->get('FilesystemPublisher', 'static_base_url');
+		
+		if($staticBaseUrl) {
+			Config::inst()->update('Director', 'alternate_base_url', $staticBaseUrl);
+		}
+		
+		if($this->fileExtension == 'php') {
+			Config::inst()->update('SSViewer', 'rewrite_hash_links', 'php'); 
+		}
+		
+		if(Config::inst()->get('StaticPublisher', 'echo_progress')) {
+			echo $this->class.": Publishing to " . $staticBaseUrl . "\n";		
+		}
+		
 		$files = array();
 		$i = 0;
 		$totalURLs = sizeof($urls);
 
 		foreach($urls as $url => $path) {
+			$origUrl = $url;
+			$result[$origUrl] = array('statuscode' => null, 'redirect' => null, 'path' => null);
 			
-			if(self::$static_base_url) Director::setBaseURL(self::$static_base_url);
+			if($staticBaseUrl) Config::inst()->update('Director', 'alternate_base_url', $staticBaseUrl);
 			$i++;
 
 			if($url && !is_string($url)) {
@@ -179,7 +206,7 @@ class FilesystemPublisher extends StaticPublisher {
 				continue;
 			}
 			
-			if(StaticPublisher::echo_progress()) {
+			if(Config::inst()->get('StaticPublisher', 'echo_progress')) {
 				echo " * Publishing page $i/$totalURLs: $url\n";
 				flush();
 			}
@@ -190,6 +217,10 @@ class FilesystemPublisher extends StaticPublisher {
 			if(Director::is_relative_url($url)) $url = Director::absoluteURL($url);
 			$response = Director::test(str_replace('+', ' ', $url));
 			
+ 			if($response) {
+ 				$result[$origUrl]['statuscode'] = $response->getStatusCode();
+ 			}
+
 			Requirements::clear();
 			
 			singleton('DataObject')->flushCache();
@@ -215,6 +246,7 @@ class FilesystemPublisher extends StaticPublisher {
 				if(is_object($response)) {
 					if($response->getStatusCode() == '301' || $response->getStatusCode() == '302') {
 						$absoluteURL = Director::absoluteURL($response->getHeader('Location'));
+						$result[$origUrl]['redirect'] = $response->getHeader('Location');
 						$content = "<meta http-equiv=\"refresh\" content=\"2; URL=$absoluteURL\">";
 					} else {
 						$content = $response->getBody();
@@ -224,7 +256,15 @@ class FilesystemPublisher extends StaticPublisher {
 				}
 			}
 			
-			$files[] = array(
+			if(Config::inst()->get('StaticPublisher', 'include_caching_metadata')) {
+				$content = str_replace(
+					'</html>', 
+					sprintf("</html>\n\n<!-- %s -->", implode(" ", $this->getMetadata($url))),
+					$content
+				);
+			}
+			
+			$files[$origUrl] = array(
 				'Content' => $content,
 				'Folder' => dirname($path).'/',
 				'Filename' => basename($path),
@@ -257,46 +297,60 @@ class FilesystemPublisher extends StaticPublisher {
 			}*/
 		}
 
-		if(self::$static_base_url) Director::setBaseURL($currentBaseURL); 
-		if($this->fileExtension == 'php') SSViewer::setOption('rewriteHashlinks', true); 
+		if(Config::inst()->get('FilesystemPublisher', 'static_base_url')) {
+			Config::inst()->update('Director', 'alternate_base_url', $currentBaseURL); 
+		}
+
+		if($this->fileExtension == 'php') {
+			Config::inst()->update('SSViewer', 'rewrite_hash_links', true); 
+		}
 
 		$base = BASE_PATH . "/$this->destFolder";
 		
-		foreach($files as $file) {
+		foreach($files as $origUrl => $file) {
 			Filesystem::makeFolder("$base/$file[Folder]");
 			
+			$path = "$base/$file[Folder]$file[Filename]";
+			$result[$origUrl]['path'] = $path;
+			
 			if(isset($file['Content'])) {
-				$fh = fopen("$base/$file[Folder]$file[Filename]", "w");
+				$fh = fopen($path, "w");
 				fwrite($fh, $file['Content']);
 				fclose($fh);
 			} else if(isset($file['Copy'])) {
-				copy($file['Copy'], "$base/$file[Folder]$file[Filename]");
+				copy($file['Copy'], $path);
 			}
 		}
+
+		return $result;
 	}
 	
 	/**
 	 * Generate the templated content for a PHP script that can serve up the 
 	 * given piece of content with the given age and expiry.
 	 *
-	 * @param string
-	 * @param int
-	 * @param string
+	 * @param string $content
+	 * @param string $age
+	 * @param string $lastModified
+	 *
+	 * @return string
 	 */
 	protected function generatePHPCacheFile($content, $age, $lastModified) {
-		$template = file_get_contents(STATIC_MODULE_DIR . '/code/CachedPHPPage.tmpl');
+		$template = file_get_contents(STATIC_MODULE_DIR . '/code/staticpublisher/CachedPHPPage.tmpl');
 
 		return str_replace(
-				array('**MAX_AGE**', '**LAST_MODIFIED**', '**CONTENT**'),
-				array((int)$age, $lastModified, $content),
-				$template);
+			array('**MAX_AGE**', '**LAST_MODIFIED**', '**CONTENT**'),
+			array((int)$age, $lastModified, $content),
+			$template
+		);
 	}
 
 	/**
 	 * Generate the templated content for a PHP script that can serve up a 301 
 	 * redirect to the given destination.
 	 *
-	 * @param string
+	 * @param string $destination
+	 *
 	 * @return string
 	 */
 	protected function generatePHPCacheRedirection($destination) {
@@ -320,15 +374,13 @@ class FilesystemPublisher extends StaticPublisher {
 	 * Return an array of all the existing static cache files, as a map of 
 	 * URL => file. Only returns cache files that will actually map to a URL, 
 	 * based on urlsToPaths.
-	 * 
+	 *
 	 * @return array
 	 */
 	public function getExistingStaticCacheFiles() {
 		$cacheDir = BASE_PATH . '/' . $this->destFolder;
 
-		$urlMapper = array_flip(
-			$this->urlsToPaths($this->owner->allPagesToCache())
-		);
+		$urlMapper = array_flip($this->urlsToPaths($this->owner->allPagesToCache()));
 		
 		$output = array();
 		
