@@ -13,19 +13,19 @@ class FilesystemPublisherTest extends SapphireTest {
 	public function setUp() {
 		parent::setUp();
 		
-		Object::add_extension("SiteTree", "FilesystemPublisher('assets/FilesystemPublisherTest-static-folder/')");
+		SiteTree::add_extension("FilesystemPublisher('assets/FilesystemPublisherTest-static-folder/')");
 		
-		$this->orig['domain_based_caching'] = FilesystemPublisher::$domain_based_caching;
+		$this->orig['domain_based_caching'] = Config::inst()->get('FilesystemPublisher', 'domain_based_caching');
 
-		FilesystemPublisher::$domain_based_caching = false;
+		Config::inst()->update('FilesystemPublisher', 'domain_based_caching', false);
 	}
 	
 	public function tearDown() {
 		parent::tearDown();
 
-		Object::remove_extension("SiteTree", "FilesystemPublisher('assets/FilesystemPublisherTest-static-folder/')");
+		SiteTree::remove_extension("FilesystemPublisher('assets/FilesystemPublisherTest-static-folder/')");
 
-		FilesystemPublisher::$domain_based_caching = $this->orig['domain_based_caching'];
+		Config::inst()->update('FilesystemPublisher', 'domain_based_caching', $this->orig['domain_based_caching']);
 
 		if(file_exists(BASE_PATH . '/assets/FilesystemPublisherTest-static-folder')) {
 			Filesystem::removeFolder(BASE_PATH . '/assets/FilesystemPublisherTest-static-folder');
@@ -80,8 +80,8 @@ class FilesystemPublisherTest extends SapphireTest {
 	}
 
 	public function testUrlsToPathsWithDomainBasedCaching() {
-		$origDomainBasedCaching = FilesystemPublisher::$domain_based_caching;
-		FilesystemPublisher::$domain_based_caching = true;
+		$origDomainBasedCaching = Config::inst()->get('FilesystemPublisher', 'domain_based_caching');
+		Config::inst()->update('FilesystemPublisher', 'domain_based_caching', true);
 		
 		$fsp = new FilesystemPublisher('.', 'html');
 		
@@ -106,7 +106,7 @@ class FilesystemPublisherTest extends SapphireTest {
 			'Nested URLsegment path mapping'
 		);
 		
-		FilesystemPublisher::$domain_based_caching = $origDomainBasedCaching;
+		Config::inst()->update('FilesystemPublisher', 'domain_based_caching', $origDomainBasedCaching);
 	}
 	
 	/**
@@ -146,6 +146,7 @@ class FilesystemPublisherTest extends SapphireTest {
 		
 		//The CMS sometimes sets the theme to null.  Check that the $current_custom_theme is still the default
 		SSViewer::set_theme(null);
+
 		$current_theme=SSViewer::current_custom_theme();
 		$this->assertEquals($current_theme, $default_theme, 'After a setting the theme to null, the default theme is correct');
 		
@@ -155,4 +156,52 @@ class FilesystemPublisherTest extends SapphireTest {
 		$current_theme=StaticPublisher::static_publisher_theme();
 		$this->assertNotEquals($current_theme, $default_theme, 'The static publisher theme overrides the custom theme');
 	}
+
+	public function testMenu2LinkingMode() { 
+		$this->logInWithPermission('ADMIN'); 
+		
+		SSViewer::set_theme(null); 
+		
+		$l1 = new StaticPublisherTestPage(); 
+		$l1->URLSegment = strtolower(__CLASS__).'-level-1'; 
+ 		$l1->write(); 
+		$l1->doPublish(); 
+	
+		$l2_1 = new StaticPublisherTestPage(); 
+		$l2_1->URLSegment = strtolower(__CLASS__).'-level-2-1'; 
+		$l2_1->ParentID = $l1->ID; 
+		$l2_1->write(); 
+		$l2_1->doPublish(); 
+		$response = Director::test($l2_1->AbsoluteLink());
+
+		$this->assertEquals(trim($response->getBody()), "current", "current page is level 2-1"); 
+                
+		$l2_2 = new StaticPublisherTestPage(); 
+		$l2_2->URLSegment = strtolower(__CLASS__).'-level-2-2'; 
+		$l2_2->ParentID = $l1->ID; 
+		$l2_2->write(); 
+		$l2_2->doPublish(); 
+		$response = Director::test($l2_2->AbsoluteLink()); 
+		$this->assertEquals(trim($response->getBody()), "linkcurrent", "current page is level 2-2"); 
+	} 
 }
+
+class StaticPublisherTestPage extends Page implements TestOnly {
+
+	private static $allowed_children = array(
+		'StaticPublisherTestPage'
+	);
+
+
+	public function canPublish($member = null) { 
+		return true; 
+	}
+
+	public function getTemplate() {
+		return STATIC_MODULE_DIR . '/tests/templates/StaticPublisherTestPage.ss';
+	}
+} 
+
+class StaticPublisherTestPage_Controller extends Page_Controller { 
+
+} 
