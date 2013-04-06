@@ -8,6 +8,7 @@ class RebuildStaticCacheTask extends BuildTask {
 		StaticPublisher::set_echo_progress(true);
 
 		$page = singleton('Page');
+
 		if(!$page->hasMethod('allPagesToCache')) {
 			user_error(
 				'RebuildStaticCacheTask::index(): Please define a method "allPagesToCache()" on your Page class to return all pages affected by a cache refresh.', 
@@ -16,8 +17,11 @@ class RebuildStaticCacheTask extends BuildTask {
 		}
 		
 		
-		if(!empty($_GET['urls'])) $urls = $_GET['urls'];
-		else $urls = $page->allPagesToCache();
+		if(!empty($_GET['urls'])) {
+			$urls = $_GET['urls'];
+		} else {
+			$urls = $page->allPagesToCache();
+		}
 		
 		$this->rebuildCache($urls, true);
 	}
@@ -28,7 +32,7 @@ class RebuildStaticCacheTask extends BuildTask {
 	 * @param array $urls The URLs of pages to re-fetch and cache.
 	 * @param bool $removeAll Remove all stale cache files (default TRUE).
 	 */
-	function rebuildCache($urls, $removeAll = true) {
+	public function rebuildCache($urls, $removeAll = true) {
 
 		if(!is_array($urls)) {
 			// $urls must be an array	
@@ -37,6 +41,7 @@ class RebuildStaticCacheTask extends BuildTask {
 		}; 
 		
 		if(!Director::is_cli()) echo "<pre>\n";
+
 		echo "Rebuilding cache.\nNOTE: Please ensure that this page ends with 'Done!' - if not, then something may have gone wrong.\n\n";
 
 		$page = singleton('Page');
@@ -46,7 +51,9 @@ class RebuildStaticCacheTask extends BuildTask {
 			Filesystem::makeFolder($cacheBaseDir);
 		}
 		
-		if (file_exists($cacheBaseDir.'/lock') && !isset($_REQUEST['force'])) die("There already appears to be a publishing queue running. You can skip warning this by adding ?/&force to the URL.");
+		if (file_exists($cacheBaseDir.'/lock') && !isset($_REQUEST['force'])) {
+			die("There already appears to be a publishing queue running. You can skip warning this by adding ?/&force to the URL.");
+		}
 		
 		touch($cacheBaseDir.'/lock');
 		
@@ -56,12 +63,10 @@ class RebuildStaticCacheTask extends BuildTask {
 				user_error("Bad URL: " . var_export($url, true), E_USER_WARNING);
 				continue;
 			}
-
-			// Remove leading slashes from all URLs (apart from the homepage)
-			if(substr($url,-1) == '/' && $url != '/') $url = substr($url,0,-1);
 			
 			$urls[$i] = $url;
 		}
+
 		$urls = array_unique($urls);
 		sort($urls);
 
@@ -69,14 +74,18 @@ class RebuildStaticCacheTask extends BuildTask {
 		
 		$start = isset($_GET['start']) ? $_GET['start'] : 0;
 		$count = isset($_GET['count']) ? $_GET['count'] : sizeof($urls);
-		if(($start + $count) > sizeof($urls)) $count = sizeof($urls) - $start;
+
+		if(($start + $count) > sizeof($urls)) {
+			$count = sizeof($urls) - $start;
+		}
 
 		$urls = array_slice($urls, $start, $count);
 
 		if($removeAll && !isset($_GET['urls']) && $start == 0 && file_exists("../cache")) {
 			echo "Removing stale cache files... \n";
 			flush();
-			if (FilesystemPublisher::$domain_based_caching) {
+
+			if (Config::inst()->get('FilesystemPublisher', 'domain_based_caching')) {
 				// Glob each dir, then glob each one of those
 				foreach(glob(BASE_PATH . '/cache/*', GLOB_ONLYDIR) as $cacheDir) {
 					foreach(glob($cacheDir.'/*') as $cacheFile) {
@@ -88,16 +97,18 @@ class RebuildStaticCacheTask extends BuildTask {
 						}
 					}
 				}
-			} else {
-				
 			}
-			
+
 			echo "done.\n\n";
 		}
+
 		echo  "Rebuilding cache from " . sizeof($mappedUrls) . " urls...\n\n";
+		
 		$page->extend('publishPages', $mappedUrls);
 		
-		if (file_exists($cacheBaseDir.'/lock')) unlink($cacheBaseDir.'/lock');
+		if (file_exists($cacheBaseDir.'/lock')) {
+			unlink($cacheBaseDir.'/lock');
+		}
 		
 		echo "\n\n== Done! ==";
 	}

@@ -58,7 +58,10 @@ class FilesystemPublisher extends StaticPublisher {
 		}
 		
 		$this->destFolder = $destFolder;
-		$this->fileExtension = $fileExtension;
+
+		if($fileExtension) {
+			$this->fileExtension = $fileExtension;
+		}
 		
 		parent::__construct();
 	}
@@ -169,6 +172,7 @@ class FilesystemPublisher extends StaticPublisher {
 		// This may have been set explicitly via StaticPublisher::static_publisher_theme,
 		// or we can use the last non-null theme.
 		$customTheme = Config::inst()->get('StaticPublisher', 'static_publisher_theme');
+
 		if(!$customTheme) {
 			Config::inst()->update('SSViewer', 'theme', Config::inst()->get('SSViewer', 'custom_theme'));
 		} else {
@@ -196,9 +200,16 @@ class FilesystemPublisher extends StaticPublisher {
 
 		foreach($urls as $url => $path) {
 			$origUrl = $url;
-			$result[$origUrl] = array('statuscode' => null, 'redirect' => null, 'path' => null);
+			$result[$origUrl] = array(
+				'statuscode' => null, 
+				'redirect' => null, 
+				'path' => null
+			);
 			
-			if($staticBaseUrl) Config::inst()->update('Director', 'alternate_base_url', $staticBaseUrl);
+			if($staticBaseUrl) {
+				Config::inst()->update('Director', 'alternate_base_url', $staticBaseUrl);
+			}
+
 			$i++;
 
 			if($url && !is_string($url)) {
