@@ -173,9 +173,7 @@ class FilesystemPublisher extends StaticPublisher {
 		// or we can use the last non-null theme.
 		$customTheme = Config::inst()->get('StaticPublisher', 'static_publisher_theme');
 
-		if(!$customTheme) {
-			Config::inst()->update('SSViewer', 'theme', Config::inst()->get('SSViewer', 'custom_theme'));
-		} else {
+		if($customTheme) {
 			Config::inst()->update('SSViewer', 'theme', $customTheme);
 		}
 			
