@@ -176,6 +176,9 @@ class FilesystemPublisher extends StaticPublisher {
 		if($customTheme) {
 			Config::inst()->update('SSViewer', 'theme', $customTheme);
 		}
+		
+		// Ensure that the theme that is set gets used.
+		Config::inst()->update('SSViewer', 'theme_enabled', true);
 			
 		$currentBaseURL = Director::baseURL();
 		$staticBaseUrl = Config::inst()->get('FilesystemPublisher', 'static_base_url');
