@@ -13,7 +13,7 @@ increase on those pages. You can run the static content alongside a full
 installation to allow for seamless integration. Also supports syncing published
 content to multiple servers for load balancing.
 
-* [Static Publisher](StaticPublisher)
+* [Static Publisher](StaticPublisher.md)
 
 ## Static Exporter
 
@@ -21,4 +21,4 @@ Export your entire website to HTML pages. Suitable if your entire site is
 static and you wish to deploy the content to a machine other than the CMS or
 as a backup measure to your website
 
-* [Static Exporter](StaticExporter)
+* [Static Exporter](StaticExporter.md)

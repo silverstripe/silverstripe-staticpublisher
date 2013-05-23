@@ -10,126 +10,132 @@ Static Publishing will generate static versions of your content (HTML, XML)
 whenever you publish a web page in the CMS and allow you to publish the page
 as HTML.
 
-See `[StaticExporter]` for a less flexible, but easier way of building a 
-local static cache from all of your pages.
+See [`StaticExporter`](StaticExporter.md) for a less flexible, but easier way of
+building a local static cache from all of your pages.
 
-See [Partial-Caching](partial-caching) for a much more flexible way of building 
-in caching without delivering static content. Partial Caching is recommended as 
-a basic enhancement to any SilverStripe site however if your site is planning a 
-vast amount of traffic (eg an article is being dug) then Static Publisher will 
-be appropriate.
+See [`Partial-Caching`](http://doc.silverstripe.org/framework/en/reference/partial-caching)
+for a much more flexible way of building in caching without delivering static
+content. Partial Caching is recommended as a basic enhancement to any SilverStripe
+site however if your site is planning a vast amount of traffic (eg an article is
+being dug) then Static Publisher will be appropriate.
 
 ## Usage
 
 SilverStripe doesn't have enough information about your template and data
 structures to automatically determine which URLs need to be cached, and at 
 which time they are considered outdated. By adding a custom method 
-`allPagesToCache() to your Page class, you can determine which URLs need 
+`allPagesToCache()` to your Page class, you can determine which URLs need
 caching, and hook in custom logic. This array of URLs is used by the publisher 
 to generate folders and HTML-files.
 
-First add the FilesystemPublisher extension to your object. See the
+First add the `FilesystemPublisher` extension to your object. See the
 [DataExtension](http://doc.silverstripe.org/framework/en/reference/dataextension)
-documentation for more ways to add the extension to your SiteTree.
+documentation for more ways to add the extension to your `SiteTree`.
 
-	:::php
-	SiteTree::add_extension("FilesystemPublisher('cache/')");
+```php
+SiteTree::add_extension("FilesystemPublisher('cache/')");
+```
 
 Once you've added the extension, define the pages you would like to cache from
-your Page class:
+your `Page` class:
 
-	:::php
-	class Page extends SiteTree {
-	  // ...
-	
-	  /**
-	   * Return a list of all the pages to cache
-	   *
-	   * @return array
-	   */
-	  public function allPagesToCache() {
-	    // Get each page type to define its sub-urls
-	    $urls = array();
-	
-	    // memory intensive depending on number of pages
-	    $pages = Page::get();
-	
-	    foreach($pages as $page) {
-	      $urls = array_merge($urls, (array)$page->subPagesToCache());
-	    }
-	    
-	    // add any custom URLs which are not SiteTree instances
-	    $urls[] = "sitemap.xml";
-	
-	    return $urls;
-	  }
-	
-	 /**
-	   * Get a list of URLs to cache related to this page.
-	   *
-	   * @return array
-	   */
-	  public function subPagesToCache() {
-	    $urls = array();
-	
-	    // add current page
-	    $urls[] = $this->Link();
-	    
-	    // cache the RSS feed if comments are enabled
-	    if ($this->ProvideComments) {
-	      $urls[] = Director::absoluteBaseURL() . "CommentingController/rss/SiteTree/" . $this->ID;
-	    }
-	    
-	    return $urls;
-	  }
-	  
-	  /**
-	   * Get a list of URL's to publish when this page changes
-	   */
-	  public function pagesAffectedByChanges() {
-	    $urls = $this->subPagesToCache();
-	    if($p = $this->Parent) $urls = array_merge((array)$urls, (array)$p->subPagesToCache());
-	    return $urls;
-	  }
+```php
+class Page extends SiteTree {
+	// ...
 
+	/**
+	 * Return a list of all the pages to cache
+	 *
+	 * @return array
+	 */
+	public function allPagesToCache() {
+		// Get each page type to define its sub-urls
+		$urls = array();
 
+		// memory intensive depending on number of pages
+		$pages = Page::get();
+
+		foreach($pages as $page) {
+			$urls = array_merge($urls, (array)$page->subPagesToCache());
+		}
+
+		// add any custom URLs which are not SiteTree instances
+		$urls[] = "sitemap.xml";
+
+		return $urls;
 	}
+
+	/**
+	 * Get a list of URLs to cache related to this page.
+	 *
+	 * @return array
+	 */
+	public function subPagesToCache() {
+		$urls = array();
+
+		// add current page
+		$urls[] = $this->Link();
+
+		// cache the RSS feed if comments are enabled
+		if ($this->ProvideComments) {
+			$urls[] = Director::absoluteBaseURL() . "CommentingController/rss/SiteTree/" . $this->ID;
+		}
+
+		return $urls;
+	}
+
+	/**
+	 * Get a list of URL's to publish when this page changes
+	 */
+	public function pagesAffectedByChanges() {
+		$urls = $this->subPagesToCache();
+		if($p = $this->Parent) $urls = array_merge((array)$urls, (array)$p->subPagesToCache());
+		return $urls;
+	}
+
+
+}
+```
 
 ## Excluding Pages
 
-The allPagesToCache function returns all the URLs needed to cache. So if you 
+The `allPagesToCache` function returns all the URLs needed to cache. So if you
 want to exclude specific pages from the cache then you unset these URLs from 
 the returned array. If you do not want to cache a specific class (eg 
-UserDefinedForms) you can also add an exclusion
+`UserDefinedForms`) you can also add an exclusion
 
-	:::php
-	class Page extends SiteTree {
-		// ..
+```php
+class Page extends SiteTree {
+	// ..
 
 	public function allPagesToCache() {
 		$urls = array();
 		$pages = SiteTree::get();
-		
+
 		// ignored page types
 		$ignored = array('UserDefinedForm');
-		
+
 		foreach($pages as $page) {
 			// check to make sure this page is not in the classname
 			if(!in_array($page->ClassName, $ignored)) {
 				$urls = array_merge($urls, (array)$page->subPagesToCache());
 			}
 		}
-		
+
 		return $urls;
 	}
+}
+```
 
 You can also pass the filtering to the original `SiteTree::get()`;
 
-	:::php
-	public function allPagesToCache() {
-		$urls = array();
-		$pages = SiteTree::get()->where("ClassName != 'UserDefinedForm'");
-		...
+```php
+public function allPagesToCache() {
+	$urls = array();
+	$pages = SiteTree::get()->where("ClassName != 'UserDefinedForm'");
+	...
+}
+```
 
 ## Single server Caching
 
@@ -138,142 +144,149 @@ is good for a basic performance enhancement.
 
 ### Setup
 
-Put this in mysite/_config.php.  This will create static content in a 
+Put this in `mysite/_config.php`.  This will create static content in a
 "cache/" subdirectory, with an HTML suffix.
 
-	:::php
-	Object::add_extension("SiteTree", "FilesystemPublisher('cache/', 'html')");
+```php
+Object::add_extension("SiteTree", "FilesystemPublisher('cache/', 'html')");
+```
 
 
-*  Put this into your .htaccess.  It will serve requests from the cache, 
+*  Put this into your `.htaccess`.  It will serve requests from the cache,
 statically, if the cache file exists.  Replace **sitedir** with the a sub
 directory that you would like to serve the site from (for example, in 
 your dev environment).
 
-	RewriteEngine On
+```
+RewriteEngine On
 
-	## CONFIG FOR DEV ENVIRONMENTS
+## CONFIG FOR DEV ENVIRONMENTS
 
-	# Cached content - **sitedir** subdirectory
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/**sitedir**/(.*)$
-	RewriteCond %{REQUEST_URI} /**sitedir**/(.*[^/])/?$
-	RewriteCond %{DOCUMENT_ROOT}/**sitedir**/cache/%1.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /**sitedir**/cache/%1.html [L]
+# Cached content - **sitedir** subdirectory
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/**sitedir**/(.*)$
+RewriteCond %{REQUEST_URI} /**sitedir**/(.*[^/])/?$
+RewriteCond %{DOCUMENT_ROOT}/**sitedir**/cache/%1.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /**sitedir**/cache/%1.html [L]
 
-	# Cached content - homepage
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/**sitedir**/?$
-	RewriteCond /**sitedir**/cache/index.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /**sitedir**/cache/index.html [L]
+# Cached content - homepage
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/**sitedir**/?$
+RewriteCond /**sitedir**/cache/index.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /**sitedir**/cache/index.html [L]
 
-	## CONFIG FOR TEST/LIVE ENVIRONMENTS
+## CONFIG FOR TEST/LIVE ENVIRONMENTS
 
-	# Cached content - live webserver
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} /(.*[^/])/?$
-	RewriteCond %{DOCUMENT_ROOT}/cache/%1.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /cache/%1.html [L]
+# Cached content - live webserver
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} /(.*[^/])/?$
+RewriteCond %{DOCUMENT_ROOT}/cache/%1.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /cache/%1.html [L]
 
-	# Cached content - homepage
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/?$
-	RewriteCond %{DOCUMENT_ROOT}/cache/index.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /cache/index.html [L]
+# Cached content - homepage
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/?$
+RewriteCond %{DOCUMENT_ROOT}/cache/index.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /cache/index.html [L]
 
-	## DYNAMIC CONFIG
+## DYNAMIC CONFIG
 
-	# Dynamic content
-	RewriteCond %{REQUEST_URI} !(\.gif)|(\.jpg)|(\.png)|(\.css)|(\.js)|(\.php)$
-	RewriteCond %{REQUEST_URI} ^(.*)$
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* staticpublisher/code/main.php?url=%1&%{QUERY_STRING} [L]
-	### SILVERSTRIPE END ###
+# Dynamic content
+RewriteCond %{REQUEST_URI} !(\.gif)|(\.jpg)|(\.png)|(\.css)|(\.js)|(\.php)$
+RewriteCond %{REQUEST_URI} ^(.*)$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* staticpublisher/main.php?url=%1&%{QUERY_STRING} [L]
+### SILVERSTRIPE END ###
+```
 
-
-*  We use a simple PHP script, static-main.php, to control cache lookup. This 
-makes the .htaccess update simpler.
+*  We use a simple PHP script, `static-main.php`, to control cache lookup. This
+makes the `.htaccess` update simpler.
 
 Just look for this line:
 
-	RewriteRule .* framework/main.php?url=%1&%{QUERY_STRING} [L]
+```
+RewriteRule .* framework/main.php?url=%1&%{QUERY_STRING} [L]
+```
 
-And change the PHP script from main.php to static-main.php:
+And change the PHP script from `main.php` to `static-main.php`:
 
-	RewriteRule .* staticpublisher/code/main.php?url=%1&%{QUERY_STRING} [L]
+```
+RewriteRule .* staticpublisher/main.php?url=%1&%{QUERY_STRING} [L]
+```
 
 ## Using Static Publisher With Subsites Module
 
 Append the following code to mysite/config.php
 
-	:::php
-	FilesystemPublisher::$domain_based_caching = true;
+```php
+FilesystemPublisher::$domain_based_caching = true;
+```
 
 
-Instead of the above code snippet for Page.php, use the following code: 
+Instead of the above code snippet for `Page.php`, use the following code:
 
-	:::php
-	class Page extends SiteTree {
-	
-	        // ...
-	
-		public function allPagesToCache() {
-	            // Get each page type to define its sub-urls
-		    $urls = array();
-	
-		    // memory intensive depending on number of pages
-		    $pages = Subsite::get_from_all_subsites("SiteTree");
-	
-		    foreach($pages as $page) {
-			$urls = array_merge($urls, (array)$page->subPagesToCache());
-		    }
-	
-		    return $urls;
+```php
+class Page extends SiteTree {
+
+		// ...
+
+	public function allPagesToCache() {
+			// Get each page type to define its sub-urls
+		$urls = array();
+
+		// memory intensive depending on number of pages
+		$pages = Subsite::get_from_all_subsites("SiteTree");
+
+		foreach($pages as $page) {
+		$urls = array_merge($urls, (array)$page->subPagesToCache());
 		}
-	
-		public function subPagesToCache() {
-			$urls = array();
-			$urls[] = $this->AbsoluteLink();
-			return $urls;
-		}
-	
-		public function pagesAffectedByChanges() {
-			$urls = $this->subPagesToCache();
-			if($p = $this->Parent) $urls = array_merge((array)$urls, (array)$p->subPagesToCache());
-			return $urls;
-		}
-	
-	        // ... some other code ...
-	
+
+		return $urls;
 	}
 
+	public function subPagesToCache() {
+		$urls = array();
+		$urls[] = $this->AbsoluteLink();
+		return $urls;
+	}
+
+	public function pagesAffectedByChanges() {
+		$urls = $this->subPagesToCache();
+		if($p = $this->Parent) $urls = array_merge((array)$urls, (array)$p->subPagesToCache());
+		return $urls;
+	}
+
+		// ... some other code ...
+
+}
+```
 
 And the last thing you need to do is adding your main site's host mapping to 
-subsites/host-map.php. For example, your main site's host is mysite.com the 
+`subsites/host-map.php`. For example, your main site's host is mysite.com the
 content of the file would be: 
 
-	:::php
-	<?php 
-	$subsiteHostmap = array (
-	  // .. subsite hots mapping ..,
-	  'mysite.com', 'mysite.com' 
-	);
-
+```php
+<?php
+$subsiteHostmap = array (
+  // .. subsite hots mapping ..,
+  'mysite.com', 'mysite.com'
+);
+```
 
 Remember that you need to add main site's host mapping every time a subsite is 
 added or modified because the operation overwrites your manual modification 
 to the file and subsite module does not add main site's hot mapping automatically 
 at the moment.
 
-Another note for host-map.php file. This file doesn't not exist until you have 
+Another note for `host-map.php` file. This file doesn't not exist until you have
 created at least one subsite. 
 
 ## Multiple Server Caching
@@ -292,17 +305,17 @@ also good for high-traffic situations.
 
 ### Setup
 
-Add the RsyncMultiHostPublisher extension to your SiteTree objects in 
+Add the `RsyncMultiHostPublisher` extension to your `SiteTree` objects in
 `mysite/_config.php`.  This will create static content in a "cache/" sub
 directory, with an HTML suffix.
 
-	:::php
-	Object::add_extension("SiteTree", "RsyncMultiHostPublisher('cache/', 'html')");
-	RsyncMultiHostPublisher::set_targets(array(
-		'<rsyncuser>@<static-server1>:<webroot>',
-		'<rsyncuser>@<static-server2>:<webroot>',
-	));
-
+```php
+Object::add_extension("SiteTree", "RsyncMultiHostPublisher('cache/', 'html')");
+RsyncMultiHostPublisher::set_targets(array(
+	'<rsyncuser>@<static-server1>:<webroot>',
+	'<rsyncuser>@<static-server2>:<webroot>',
+));
+```
 
 Where `<rsyncuser>` is a unix account with write permissions to `<webroot>` 
 (e.g. `/var/www`), and `<static-server1>` and `<static-server2>` are the names 
@@ -317,51 +330,53 @@ key-based authentication without requiring a password for the username
 specified in `<rsyncuser>` (see [http://www.csua.berkeley.edu/~ranga/notes/ssh_nopass.html
 tutorial](http://www.csua.berkeley.edu/~ranga/notes/ssh_nopass.html tutorial)).
 
-*  Put the .htaccess file linked below into the webroot of each static content 
+*  Put the `.htaccess` file linked below into the webroot of each static content
 server (and rename it to `.htaccess`). It will serve requests from the cache, 
 statically, if the cache file exists.  Replace **sitedir** with the a
 subdirectory that you would like to serve the site from (for example, in your 
 dev environment).
-	
-	### SILVERSTRIPE START ###
-	RewriteEngine On
 
-	## CONFIG FOR DEV ENVIRONMENTS
+```
+### SILVERSTRIPE START ###
+RewriteEngine On
 
-	# Cached content - **sitedir** subdirectory
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/**sitedir**/(.*)$
-	RewriteCond %{REQUEST_URI} /**sitedir**/(.*[^/])/?$
-	RewriteCond %{DOCUMENT_ROOT}/**sitedir**/cache/%1.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /**sitedir**/cache/%1.html [L]
+## CONFIG FOR DEV ENVIRONMENTS
 
-	# Cached content - homepage
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/**sitedir**/?$
-	RewriteCond /**sitedir**/cache/index.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /**sitedir**/cache/index.html [L]
+# Cached content - **sitedir** subdirectory
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/**sitedir**/(.*)$
+RewriteCond %{REQUEST_URI} /**sitedir**/(.*[^/])/?$
+RewriteCond %{DOCUMENT_ROOT}/**sitedir**/cache/%1.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /**sitedir**/cache/%1.html [L]
 
-	## CONFIG FOR TEST/LIVE ENVIRONMENTS
+# Cached content - homepage
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/**sitedir**/?$
+RewriteCond /**sitedir**/cache/index.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /**sitedir**/cache/index.html [L]
 
-	# Cached content - live webserver
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} /(.*[^/])/?$
-	RewriteCond %{DOCUMENT_ROOT}/cache/%1.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /cache/%1.html [L]
+## CONFIG FOR TEST/LIVE ENVIRONMENTS
 
-	# Cached content - homepage
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/?$
-	RewriteCond %{DOCUMENT_ROOT}/cache/index.html -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /cache/index.html [L]
+# Cached content - live webserver
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} /(.*[^/])/?$
+RewriteCond %{DOCUMENT_ROOT}/cache/%1.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /cache/%1.html [L]
+
+# Cached content - homepage
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/?$
+RewriteCond %{DOCUMENT_ROOT}/cache/index.html -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /cache/index.html [L]
+```
 
 ## Cache Control 
 
@@ -374,54 +389,57 @@ last modification date for each static file is controlled by the publication
 script, meaning the cache gets invalidated on each publication.
 
 To enable cache control, specify "php" instead of "html" in the 
-RsyncMultiHostPublisher definition.
+`RsyncMultiHostPublisher` definition.
 
-	:::php
-	Object::add_extension("SiteTree", "RsyncMultiHostPublisher('cache/', 'php')");
+```
+Object::add_extension("SiteTree", "RsyncMultiHostPublisher('cache/', 'php')");
+```
 
 
-And use this slightly different .htaccess file. Make sure that index.php can be 
-used as a directory index in your apache (`DirectoryIndex`) or nginx (`index`)
+And use this slightly different `.htaccess` file. Make sure that `index.php` can
+be used as a directory index in your apache (`DirectoryIndex`) or nginx (`index`)
 	
-	### SILVERSTRIPE START ###
-	RewriteEngine On
+```
+### SILVERSTRIPE START ###
+RewriteEngine On
 
-	## CONFIG FOR DEV ENVIRONMENTS
+## CONFIG FOR DEV ENVIRONMENTS
 
-	# Cached content - **sitedir** subdirectory
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/**sitedir**/(.*)$
-	RewriteCond %{REQUEST_URI} /**sitedir**/(.*[^/])/?$
-	RewriteCond %{DOCUMENT_ROOT}/**sitedir**/cache/%1.php -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /**sitedir**/cache/%1.php [L]
+# Cached content - **sitedir** subdirectory
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/**sitedir**/(.*)$
+RewriteCond %{REQUEST_URI} /**sitedir**/(.*[^/])/?$
+RewriteCond %{DOCUMENT_ROOT}/**sitedir**/cache/%1.php -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /**sitedir**/cache/%1.php [L]
 
-	# Cached content - homepage
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/**sitedir**/?$
-	RewriteCond /**sitedir**/cache/index.php -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /**sitedir**/cache/index.php [L]
+# Cached content - homepage
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/**sitedir**/?$
+RewriteCond /**sitedir**/cache/index.php -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /**sitedir**/cache/index.php [L]
 
-	## CONFIG FOR TEST/LIVE ENVIRONMENTS
+## CONFIG FOR TEST/LIVE ENVIRONMENTS
 
-	# Cached content - live webserver
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} /(.*[^/])/?$
-	RewriteCond %{DOCUMENT_ROOT}/cache/%1.php -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /cache/%1.php [L]
+# Cached content - live webserver
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} /(.*[^/])/?$
+RewriteCond %{DOCUMENT_ROOT}/cache/%1.php -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /cache/%1.php [L]
 
-	# Cached content - homepage
-	RewriteCond %{REQUEST_METHOD} ^GET$
-	RewriteCond %{QUERY_STRING} ^$
-	RewriteCond %{REQUEST_URI} ^/?$
-	RewriteCond %{DOCUMENT_ROOT}/cache/index.php -f
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule .* /cache/index.php [L]
+# Cached content - homepage
+RewriteCond %{REQUEST_METHOD} ^GET$
+RewriteCond %{QUERY_STRING} ^$
+RewriteCond %{REQUEST_URI} ^/?$
+RewriteCond %{DOCUMENT_ROOT}/cache/index.php -f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .* /cache/index.php [L]
+```
 
 ## Deployment
 
@@ -430,20 +448,23 @@ you can build the static HTML files. This is done by the `RebuildStaticCacheTask
 
 Execution via URL
 
-	http://www.yoursite.com/dev/buildcache?flush=1
+```
+http://www.yoursite.com/dev/buildcache?flush=1
+```
 
 Execution on CLI (via [sake](framework/en/topics/commandline))
+```
+sake dev/buildcache flush=1
+```
 
-	sake dev/buildcache flush=1
-
-Depending on which extension you've set up for your SiteTree (FilesystemPublisher 
-or RsyncMultiHostPublisher), the method publishPages() either stores the generated 
+Depending on which extension you've set up for your `SiteTree` (`FilesystemPublisher`
+or `RsyncMultiHostPublisher`), the method `publishPages()` either stores the generated
 HTML-files on the server's filesystem, or deploys them to other servers via rsync.
 
-It is advisable to set dev/buildcache up as an automated task (e.g. unix cron) 
+It is advisable to set `dev/buildcache` up as an automated task (e.g. unix cron)
 which continually rebuilds and redeploys the cache. 
 
 ## Related
 
-*  `[StaticExporter](StaticExporter)`
-*  [Partial-Caching](/framework/partial-caching)
+*  [StaticExporter](StaticExporter.md)
+*  [Partial-Caching](http://doc.silverstripe.org/framework/en/reference/partial-caching)
