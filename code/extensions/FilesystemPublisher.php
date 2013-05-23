@@ -347,7 +347,7 @@ class FilesystemPublisher extends StaticPublisher {
 	 * @return string
 	 */
 	protected function generatePHPCacheFile($content, $age, $lastModified) {
-		$template = file_get_contents(STATIC_MODULE_DIR . '/code/staticpublisher/CachedPHPPage.tmpl');
+		$template = file_get_contents(STATIC_MODULE_DIR . '/code/CachedPHPPage.tmpl');
 
 		return str_replace(
 			array('**MAX_AGE**', '**LAST_MODIFIED**', '**CONTENT**'),
