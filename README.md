@@ -19,6 +19,6 @@ static files to both a local or remote server for increased site performance.
 
 ## Documentation
 
-See the docs folder.
+See the [docs](docs/) folder.
 
 Note this is untested on Windows.
