@@ -3,22 +3,27 @@
  * @package staticpublisher
  */
 abstract class StaticPublisher extends DataExtension {
+
 	/**
 	 * Defines whether to output information about publishing or not. By 
 	 * default, this is off, and should be turned on when you want debugging 
 	 * (for example, in a cron task).
 	 *
 	 * @var boolean
+	 *
+	 * @config
 	 */
-	protected static $echo_progress = false;
+	private static $echo_progress = false;
 	
 	/**
 	 * Realtime static publishing... the second a page is saved, it is 
 	 * written to the cache.
 	 *
 	 * @var boolean
+	 *
+	 * @config
 	 */
-	public static $disable_realtime = false;
+	private static $disable_realtime = false;
 	
 	/**
 	 * This is the current static publishing theme, which can be set at any 
@@ -27,8 +32,10 @@ abstract class StaticPublisher extends DataExtension {
 	 * _config.php
 	 *
 	 * @var string
+	 *
+	 * @config
 	 */
-	protected static $static_publisher_theme = false;
+	private static $static_publisher_theme = false;
 	
 	/**
 	 * @var boolean includes a timestamp at the bottom of the generated HTML 
@@ -50,32 +57,45 @@ abstract class StaticPublisher extends DataExtension {
 	abstract function unpublishPages($pages);
 
 	/**
+	 * @deprecated
 	 * @param string
 	 */
 	public static function set_static_publisher_theme($theme) {
-		self::$static_publisher_theme=$theme;
+		Deprecation::notice('1.0', 'Use the new config system. SSViewer.static_publisher_theme');
+
+		Config::inst()->update('StaticPublisher', 'static_publisher_theme', $theme);
 	}
 	
 	/**
+	 * @deprecated
+	 *
 	 * @return string
 	 */
 	public static function static_publisher_theme() {
-		return self::$static_publisher_theme;
+		Deprecation::notice('1.0', 'Use the new config system. SSViewer.static_publisher_theme');
+
+		return Config::inst()->get('StaticPublisher', 'static_publisher_theme');
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * @return boolean
 	 */
 	public static function echo_progress() {
-		return (boolean)self::$echo_progress;
+		Deprecation::notice('1.0', 'Use the new config system. SSViewer.static_publisher_theme');
+
+		return Config::inst()->get('StaticPublisher', 'echo_progress');
 	}
 	
 	/**
-	 * Either turns on (boolean true) or off (boolean false) the progress indicators.
-	 * @see StaticPublisher::$echo_progress
+	 * @deprecated
+	 *
 	 */
 	public static function set_echo_progress($progress) {
-		self::$echo_progress = (boolean)$progress;
+		Deprecation::notice('1.0', 'Use the new config system. SSViewer.static_publisher_theme');
+
+		Config::inst()->get('StaticPublisher', 'echo_progress', $progress);
 	}
 
 	/**

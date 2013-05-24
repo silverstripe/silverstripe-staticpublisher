@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Tests for the {@link FilesystemPublisher} class.
  * 
@@ -122,6 +123,7 @@ class FilesystemPublisherTest extends SapphireTest {
 	 */
 	public function testHasCalledParentConstructor() {
 		$fsp = new FilesystemPublisher('.', '.html');
+
 		$this->assertEquals($fsp->class, 'FilesystemPublisher');
 	}
 	
@@ -146,7 +148,7 @@ class FilesystemPublisherTest extends SapphireTest {
 		
 		//We can set the static_publishing theme to something completely different:
 		//Static publishing will use this one instead of the current_custom_theme if it is not false
-		StaticPublisher::set_static_publisher_theme('otherTheme');
+		Config::inst()->update('StaticPublisher', 'static_publisher_theme', 'otherTheme');
 		$current_theme = StaticPublisher::static_publisher_theme();
 
 		$this->assertNotEquals($current_theme, $default_theme, 'The static publisher theme overrides the custom theme');
@@ -166,6 +168,7 @@ class FilesystemPublisherTest extends SapphireTest {
 		$l2_1->URLSegment = strtolower(__CLASS__).'-level-2-1'; 
 		$l2_1->ParentID = $l1->ID; 
 		$l2_1->write(); 
+		
 		$l2_1->doPublish(); 
 		$response = Director::test($l2_1->AbsoluteLink());
 
@@ -175,12 +178,16 @@ class FilesystemPublisherTest extends SapphireTest {
 		$l2_2->URLSegment = strtolower(__CLASS__).'-level-2-2'; 
 		$l2_2->ParentID = $l1->ID; 
 		$l2_2->write(); 
-		$l2_2->doPublish(); 
+		$l2_2->doPublish();
+
 		$response = Director::test($l2_2->AbsoluteLink()); 
 		$this->assertEquals(trim($response->getBody()), "linkcurrent", "current page is level 2-2"); 
 	} 
 }
 
+/**
+ * @package staticpublisher
+ */
 class StaticPublisherTestPage extends Page implements TestOnly {
 
 	private static $allowed_children = array(
@@ -197,6 +204,9 @@ class StaticPublisherTestPage extends Page implements TestOnly {
 	}
 } 
 
+/**
+ * @package staticpublisher
+ */
 class StaticPublisherTestPage_Controller extends Page_Controller { 
 
 }

@@ -5,8 +5,8 @@
 class RebuildStaticCacheTask extends BuildTask {
 
 	public function run($request) {
-		StaticPublisher::set_echo_progress(true);
-
+		Config::inst()->update('StaticPublisher', 'echo_progress', true);
+		
 		$page = singleton('Page');
 
 		if(!$page->hasMethod('allPagesToCache')) {

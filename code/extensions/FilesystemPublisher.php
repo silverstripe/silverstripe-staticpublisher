@@ -17,6 +17,7 @@ class FilesystemPublisher extends StaticPublisher {
 	
 	/**
 	 * @var string
+	 *
 	 * @config
 	 */
 	private static $static_base_url = null;
