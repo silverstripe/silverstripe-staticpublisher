@@ -132,8 +132,8 @@ class FilesystemPublisherTest extends SapphireTest {
 	 */
 	public function testStaticPublisherTheme(){
 		
-		//This will be the name of the default theme of this particular project
-		$default_theme=SSViewer::current_theme();
+		// This will be the name of the default theme of this particular project
+		$default_theme = Config::inst()->get('SSViewer', 'theme');
 		
 		$p1 = new Page();
 		$p1->URLSegment = strtolower(__CLASS__).'-page-1';
@@ -141,20 +141,21 @@ class FilesystemPublisherTest extends SapphireTest {
 		$p1->write();
 		$p1->doPublish();
 		
-		$current_theme=SSViewer::current_custom_theme();
+		$current_theme = Config::inst()->get('SSViewer', 'theme_enabled') ? Config::inst()->get('SSViewer', 'theme') : null;
 		$this->assertEquals($current_theme, $default_theme, 'After a standard publication, the theme is correct');
 		
 		//We can set the static_publishing theme to something completely different:
 		//Static publishing will use this one instead of the current_custom_theme if it is not false
 		StaticPublisher::set_static_publisher_theme('otherTheme');
-		$current_theme=StaticPublisher::static_publisher_theme();
+		$current_theme = StaticPublisher::static_publisher_theme();
+
 		$this->assertNotEquals($current_theme, $default_theme, 'The static publisher theme overrides the custom theme');
 	}
 
 	public function testMenu2LinkingMode() { 
 		$this->logInWithPermission('ADMIN'); 
 		
-		SSViewer::set_theme(null); 
+		Config::inst()->update('SSViewer', 'theme', null);
 		
 		$l1 = new StaticPublisherTestPage(); 
 		$l1->URLSegment = strtolower(__CLASS__).'-level-1'; 
