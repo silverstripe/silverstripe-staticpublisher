@@ -28,8 +28,17 @@ abstract class StaticPublisher extends DataExtension {
 	 *
 	 * @var string
 	 */
-	protected static $static_publisher_theme=false;
+	protected static $static_publisher_theme = false;
 	
+	/**
+	 * @var boolean includes a timestamp at the bottom of the generated HTML 
+	 * of each file, which can be useful for debugging issues with stale 
+	 * caches etc.
+	 *
+	 * @config
+	 */
+	private static $include_caching_metadata = false;
+
 	/**
 	 * @param array
 	 */
@@ -174,5 +183,16 @@ abstract class StaticPublisher extends DataExtension {
 		}
 		
 		return $urls;		
+	}
+
+	/**
+	 * @param string $url
+	 *
+	 * @return array
+	 */
+	public function getMetadata($url) {
+		return array(
+			'Cache generated on ' . date('Y-m-d H:i:s T (O)')
+		);
 	}
 }

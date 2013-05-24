@@ -110,6 +110,6 @@ class RebuildStaticCacheTask extends BuildTask {
 			unlink($cacheBaseDir.'/lock');
 		}
 		
-		echo "\n\n== Done! ==";
+		echo "\n\n== Done! ==\n";
 	}
 }
