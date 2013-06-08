@@ -53,6 +53,7 @@ class StaticExporter extends Controller {
 
 
 	public function export() {
+		
 		if(isset($_REQUEST['baseurl'])) {
 			$base = $_REQUEST['baseurl'];
 			if(substr($base,-1) != '/') $base .= '/';
@@ -137,6 +138,8 @@ class StaticExporter extends Controller {
 				// Run the page
 				Requirements::clear();
 				$link = Director::makeRelative($obj->Link());
+
+				DataObject::flush_and_destroy_cache();
 				$response = Director::test($link);
 
 				// Write to file
