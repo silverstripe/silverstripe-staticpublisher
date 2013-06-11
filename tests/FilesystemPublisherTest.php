@@ -182,7 +182,29 @@ class FilesystemPublisherTest extends SapphireTest {
 
 		$response = Director::test($l2_2->AbsoluteLink()); 
 		$this->assertEquals(trim($response->getBody()), "linkcurrent", "current page is level 2-2"); 
-	} 
+	}
+
+	public function testContentTypeHTML() {
+		SiteTree::remove_extension('FilesystemPublisher');
+		SiteTree::add_extension("FilesystemPublisher('assets/FilesystemPublisherTest-static-folder/', 'php')");
+		$l1 = new StaticPublisherTestPage();
+		$l1->URLSegment = 'mimetype';
+ 		$l1->write();
+		$l1->doPublish();
+		$response = Director::test('mimetype');
+		$this->assertEquals($response->getHeader('Content-Type'), 'text/html; charset=utf-8', 'Content-Type should be text/html; charset=utf-8');
+	}
+
+	public function testContentTypeJSON() {
+		SiteTree::remove_extension('FilesystemPublisher');
+		SiteTree::add_extension("FilesystemPublisher('assets/FilesystemPublisherTest-static-folder/', 'php')");
+		$l1 = new StaticPublisherTestPage();
+		$l1->URLSegment = 'mimetype';
+ 		$l1->write();
+		$l1->doPublish();
+		$response = Director::test('mimetype/json');
+		$this->assertEquals($response->getHeader('Content-Type'), 'application/json', 'Content-Type should be application/json');
+	}
 }
 
 /**
@@ -207,6 +229,14 @@ class StaticPublisherTestPage extends Page implements TestOnly {
 /**
  * @package staticpublisher
  */
-class StaticPublisherTestPage_Controller extends Page_Controller { 
+class StaticPublisherTestPage_Controller extends Page_Controller {
+
+	public function json(SS_HTTPRequest $request) {
+
+		$response = new SS_HTTPResponse('{"firstName": "John"}');
+		$response->addHeader('Content-Type', 'application/json');
+		return $response;
+
+	}
 
 }
