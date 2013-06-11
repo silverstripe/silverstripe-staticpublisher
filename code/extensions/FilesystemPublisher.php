@@ -248,10 +248,10 @@ class FilesystemPublisher extends StaticPublisher {
 					if($response->getStatusCode() == '301' || $response->getStatusCode() == '302') {
 						$content = $this->generatePHPCacheRedirection($response->getHeader('Location'));
 					} else {
-						$content = $this->generatePHPCacheFile($response->getBody(), HTTP::get_cache_age(), date('Y-m-d H:i:s'));
+						$content = $this->generatePHPCacheFile($response->getBody(), HTTP::get_cache_age(), date('Y-m-d H:i:s'), $response->getHeader('Content-Type'));
 					}
 				} else {
-					$content = $this->generatePHPCacheFile($response . '', HTTP::get_cache_age(), date('Y-m-d H:i:s'));
+					$content = $this->generatePHPCacheFile($response . '', HTTP::get_cache_age(), date('Y-m-d H:i:s'), $response->getHeader('Content-Type'));
 				}
 				
 			// HTML file caching generally just creates a simple file
@@ -345,15 +345,15 @@ class FilesystemPublisher extends StaticPublisher {
 	 * @param string $content
 	 * @param string $age
 	 * @param string $lastModified
+	 * @param string $contentType
 	 *
 	 * @return string
 	 */
-	protected function generatePHPCacheFile($content, $age, $lastModified) {
+	protected function generatePHPCacheFile($content, $age, $lastModified, $contentType) {
 		$template = file_get_contents(STATIC_MODULE_DIR . '/code/CachedPHPPage.tmpl');
-
 		return str_replace(
-			array('**MAX_AGE**', '**LAST_MODIFIED**', '**CONTENT**'),
-			array((int)$age, $lastModified, $content),
+			array('**MAX_AGE**', '**LAST_MODIFIED**', '**CONTENT**', '**CONTENT_TYPE**'),
+			array((int)$age, $lastModified, $content, $contentType),
 			$template
 		);
 	}
