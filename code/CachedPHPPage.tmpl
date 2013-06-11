@@ -9,6 +9,7 @@
 
 define('MAX_AGE', '**MAX_AGE**');
 define('LAST_MODIFIED', '**LAST_MODIFIED**');
+define('CONTENT_TYPE', '**CONTENT_TYPE**');
 
 if(MAX_AGE > 0) {
 	header("Cache-Control: max-age=" . MAX_AGE);
@@ -19,6 +20,7 @@ if(MAX_AGE > 0) {
 
 header("Expires: " . gmdate('D, d M Y H:i:s', time() + MAX_AGE) . ' GMT');
 header("Last-modified: " . gmdate('D, d M Y H:i:s', strtotime(LAST_MODIFIED)) . ' GMT');
+header('Content-Type: '.CONTENT_TYPE);
 
 if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
 	if(strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= strtotime(LAST_MODIFIED)) {
