@@ -160,6 +160,9 @@ class FilesystemPublisher extends StaticPublisher {
 	public function publishPages($urls) { 
 		$result = array();
 
+		//nest the config so we can make changes to the config and revert easily
+		Config::nest();
+
 		// Do we need to map these?
 		// Detect a numerically indexed arrays
 		if (is_numeric(join('', array_keys($urls)))) $urls = $this->urlsToPaths($urls);
@@ -181,7 +184,6 @@ class FilesystemPublisher extends StaticPublisher {
 		// Ensure that the theme that is set gets used.
 		Config::inst()->update('SSViewer', 'theme_enabled', true);
 			
-		$currentBaseURL = Director::baseURL();
 		$staticBaseUrl = Config::inst()->get('FilesystemPublisher', 'static_base_url');
 		
 		if($staticBaseUrl) {
@@ -207,10 +209,6 @@ class FilesystemPublisher extends StaticPublisher {
 				'redirect' => null, 
 				'path' => null
 			);
-			
-			if($staticBaseUrl) {
-				Config::inst()->update('Director', 'alternate_base_url', $staticBaseUrl);
-			}
 
 			$i++;
 
@@ -334,13 +332,8 @@ class FilesystemPublisher extends StaticPublisher {
 			}*/
 		}
 
-		if(Config::inst()->get('FilesystemPublisher', 'static_base_url')) {
-			Config::inst()->update('Director', 'alternate_base_url', $currentBaseURL); 
-		}
-
-		if($this->fileExtension == 'php') {
-			Config::inst()->update('SSViewer', 'rewrite_hash_links', true); 
-		}
+		//return config to its previous state
+		Config::unnest();
 
 		$base = BASE_PATH . "/$this->destFolder";
 		
