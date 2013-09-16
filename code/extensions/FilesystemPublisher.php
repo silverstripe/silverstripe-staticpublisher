@@ -229,17 +229,26 @@ class FilesystemPublisher extends StaticPublisher {
 			if($url == "") $url = "/";
 			if(Director::is_relative_url($url)) $url = Director::absoluteURL($url);
 			$response = Director::test(str_replace('+', ' ', $url));
-			
- 			if($response) {
- 				$result[$origUrl]['statuscode'] = $response->getStatusCode();
- 			}
 
+			if (!$response) continue;
+
+			if($response) {
+				$result[$origUrl]['statuscode'] = $response->getStatusCode();
+			}
 			Requirements::clear();
 			
 			singleton('DataObject')->flushCache();
 
-			//skip any responses with a 404 status code. We don't want to turn those into statically cached pages
-			if (!$response || $response->getStatusCode() == '404') continue;
+			// Check for ErrorPages generating output - we want to handle this in a special way below.
+			$isErrorPage = false;
+			$pageObject = null;
+			if ($response && is_object($response) && ((int)$response->getStatusCode())>=400) {
+				$pageObject = SiteTree::get_by_link($url);
+				if ($pageObject && $pageObject instanceof ErrorPage) $isErrorPage = true;
+			}
+
+			// Skip any responses with a 404 status code unless it's the ErrorPage itself.
+			if (!$isErrorPage && is_object($response) && $response->getStatusCode()=='404') continue;
 
 			// Generate file content			
 			// PHP file caching will generate a simple script from a template
@@ -276,12 +285,27 @@ class FilesystemPublisher extends StaticPublisher {
 					$content
 				);
 			}
-			
-			$files[$origUrl] = array(
-				'Content' => $content,
-				'Folder' => dirname($path).'/',
-				'Filename' => basename($path),
-			);
+
+			if (!$isErrorPage) {
+
+				$files[$origUrl] = array(
+					'Content' => $content,
+					'Folder' => dirname($path).'/',
+					'Filename' => basename($path),
+				);
+
+			} else {
+
+				// Generate a static version of the error page with a standardised name, so they can be plugged
+				// into catch-all webserver statements such as Apache's ErrorDocument.
+				$code = (int)$response->getStatusCode();
+				$files[$origUrl] = array(
+					'Content' => $content,
+					'Folder' => dirname($path).'/',
+					'Filename' => "error-$code.html",
+				);
+
+			}
 			
 			// Add externals
 			/*
