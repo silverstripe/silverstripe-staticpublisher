@@ -449,20 +449,20 @@ you can build the static HTML files. This is done by the `RebuildStaticCacheTask
 Execution via URL
 
 ```
-http://www.yoursite.com/dev/buildcache?flush=1
+http://www.yoursite.com/dev/tasks/RebuildStaticCacheTask?flush=1
 ```
 
 Execution on CLI (via [sake](framework/en/topics/commandline))
 ```
-sake dev/buildcache flush=1
+sake dev/tasks/RebuildStaticCacheTask flush=1
 ```
 
 Depending on which extension you've set up for your `SiteTree` (`FilesystemPublisher`
 or `RsyncMultiHostPublisher`), the method `publishPages()` either stores the generated
 HTML-files on the server's filesystem, or deploys them to other servers via rsync.
 
-It is advisable to set `dev/buildcache` up as an automated task (e.g. unix cron)
-which continually rebuilds and redeploys the cache. 
+It is advisable to set `dev/tasks/RebuildStaticCacheTask` up as an automated 
+task (e.g. unix cron) which continually rebuilds and redeploys the cache. 
 
 ## Related
 

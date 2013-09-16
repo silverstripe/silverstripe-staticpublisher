@@ -1,0 +1,6 @@
+---
+Name: staticpublisherroutes
+---
+Director:
+  rules:
+    'dev/buildcache': '->dev/tasks/RebuildStaticCacheTask'
