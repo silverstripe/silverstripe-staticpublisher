@@ -149,7 +149,7 @@ class FilesystemPublisherTest extends SapphireTest {
 		//We can set the static_publishing theme to something completely different:
 		//Static publishing will use this one instead of the current_custom_theme if it is not false
 		Config::inst()->update('StaticPublisher', 'static_publisher_theme', 'otherTheme');
-		$current_theme = StaticPublisher::static_publisher_theme();
+		$current_theme = Config::inst()->get('StaticPublisher', 'static_publisher_theme');
 
 		$this->assertNotEquals($current_theme, $default_theme, 'The static publisher theme overrides the custom theme');
 	}
@@ -229,10 +229,15 @@ class StaticPublisherTestPage extends Page implements TestOnly {
 /**
  * @package staticpublisher
  */
-class StaticPublisherTestPage_Controller extends Page_Controller {
+class StaticPublisherTestPage_Controller extends Page_Controller implements TestOnly {
 
+	/**
+	 *
+	 * @var array
+	 */
+	private static $allowed_actions = array('json');
+	
 	public function json(SS_HTTPRequest $request) {
-
 		$response = new SS_HTTPResponse('{"firstName": "John"}');
 		$response->addHeader('Content-Type', 'application/json');
 		return $response;
