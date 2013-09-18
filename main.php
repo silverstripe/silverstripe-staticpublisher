@@ -21,6 +21,8 @@
  * @package staticpublisher
  */
 
+require_once('../framework/core/Constants.php');
+ 
 $cacheEnabled = true;
 $cacheDebug = false;
 $cacheBaseDir = '../cache/'; // Should point to the same folder as FilesystemPublisher->destFolder
