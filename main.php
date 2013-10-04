@@ -108,8 +108,24 @@ if (
 	$file = implode('/', array_map('rawurlencode', explode('/', $file)));
 	// Find file by extension (either *.html or *.php)
 	if (file_exists($cacheBaseDir . $cacheDir . $file . '.html')) {
+		//source: http://css-tricks.com/snippets/php/intelligent-php-cache-control/
+		$filepath = $cacheBaseDir . $cacheDir . $file . '.html';
+		$lastModified=filemtime($filepath);
+		$etagFile = md5_file($filepath);
+		$ifModifiedSince=(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? $_SERVER['HTTP_IF_MODIFIED_SINCE'] : false);
+		$etagHeader=(isset($_SERVER['HTTP_IF_NONE_MATCH']) ? trim($_SERVER['HTTP_IF_NONE_MATCH']) : false);
+		
+		header("Last-Modified: ".gmdate("D, d M Y H:i:s", $lastModified)." GMT");
+		header("Etag: $etagFile");
+		header('Cache-Control: public');
 		header('X-SilverStripe-Cache: hit at '.@date('r'));
-		echo file_get_contents($cacheBaseDir . $cacheDir . $file . '.html');
+		
+		if (@strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE'])==$lastModified || $etagHeader == $etagFile) {
+		       header("HTTP/1.1 304 Not Modified");
+		       exit;
+		}
+		
+		echo file_get_contents($filepath);
 		if ($cacheDebug) {
 			echo "<h1>File was cached</h1>";
 		}
