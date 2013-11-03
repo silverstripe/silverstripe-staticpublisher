@@ -118,7 +118,9 @@ abstract class StaticPublisher extends DataExtension {
 	}
 	
 	public function republish($original) {
-		if (self::$disable_realtime) return;
+		if (Config::inst()->get('StaticPublisher', 'disable_realtime')) {
+			return;
+		}
 
 		$urls = array();
 		
@@ -155,7 +157,9 @@ abstract class StaticPublisher extends DataExtension {
 	 * Get changes and hook into underlying functionality.
 	 */
 	public function onAfterUnpublish($page) {
-		if (self::$disable_realtime) return;
+		if (Config::inst()->get('StaticPublisher', 'disable_realtime')) {
+			return;
+		}
 		
 		// Get the affected URLs
 		if($this->owner->hasMethod('pagesAffectedByUnpublishing')) {
