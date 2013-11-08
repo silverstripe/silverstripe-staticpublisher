@@ -179,39 +179,8 @@ abstract class StaticPublisher extends DataExtension {
 	}
 		
 	/**
-	 * Get all external references to CSS, JS, 
-	 */
-	public function externalReferencesFor($content) {
-		$CLI_content = escapeshellarg($content);
-		$tidy = `echo $CLI_content | tidy -numeric -asxhtml`;
-		$tidy = preg_replace('/xmlns="[^"]+"/','', $tidy);
-		$xContent = new SimpleXMLElement($tidy);
-		
-		$xlinks = array(
-			"//link[@rel='stylesheet']/@href" => false,
-			"//script/@src" => false,
-			"//img/@src" => false,
-			"//a/@href" => true,
-		);
-		
-		$urls = array();
-
-		foreach($xlinks as $xlink => $assetsOnly) {
-			$matches = $xContent->xpath($xlink);
-			if($matches) foreach($matches as $item) {
-				$url = $item . '';
-				if($assetsOnly && substr($url,0,7) != ASSETS_DIR . '/') continue;
-
-				$urls[] = $url;
-			}
-		}
-		
-		return $urls;		
-	}
-
-	/**
+	 * 
 	 * @param string $url
-	 *
 	 * @return array
 	 */
 	public function getMetadata($url) {
