@@ -226,9 +226,21 @@ class FilesystemPublisher extends StaticPublisher {
 
 			Requirements::clear();
 			
-			if($url == "") $url = "/";
-			if(Director::is_relative_url($url)) $url = Director::absoluteURL($url);
-			$response = Director::test(str_replace('+', ' ', $url));
+			if($url == "") {
+				$url = "/";
+			}
+			if(Director::is_relative_url($url)) {
+				$url = Director::absoluteURL($url);
+			}
+			
+			if(class_exists('Subsite') && Config::inst()->get('FilesystemPublisher', 'domain_based_caching')) {
+				$urlParts = parse_url($url);
+				$subSiteID = Subsite::getSubsiteIDForDomain($urlParts['host']);
+				$url = $urlParts['path'];
+				$response = Director::test(str_replace('+', ' ', $url.'?SubsiteID='.$subSiteID));
+			} else {
+				$response = Director::test(str_replace('+', ' ', $url));
+			}
 
 			if (!$response) continue;
 
