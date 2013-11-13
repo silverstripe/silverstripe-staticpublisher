@@ -115,7 +115,10 @@ class FilesystemPublisher extends StaticPublisher {
 			$filename = $urlSegment ? "$urlSegment.$this->fileExtension" : "index.$this->fileExtension";
 
 			if (Config::inst()->get('FilesystemPublisher', 'domain_based_caching')) {
-				if (!$urlParts) continue; // seriously malformed url here...
+				// seriously malformed url here...
+				if(!($urlParts && isset($urlParts['host']))) {
+					continue; 
+				}
 				$filename = $urlParts['host'] . '/' . $filename;
 			}
 		
