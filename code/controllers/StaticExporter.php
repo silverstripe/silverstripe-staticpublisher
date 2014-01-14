@@ -16,24 +16,79 @@
  */
 class StaticExporter extends Controller {
 
+	/**
+	 * @config
+	 *
+	 * @var array $export_objects
+	 */
+	private static $export_objects = array();
+
+	/**
+	 * @config
+	 *
+	 * @var bool
+	 */
+	private static $disable_sitetree_export = false;
+
+	/**
+	 * @var array
+	 */
 	private static $allowed_actions = array(
 		'index', 
 		'export', 
 		'StaticExportForm'
 	);
 
+	/**
+	 * 
+	 */
+	public function __construct() {
+		parent::__construct();
+
+		if(class_exists('SiteTree')) {
+			if(!$this->config()->get('disable_sitetree_export')) {
+				$objs[] = $this->config()->get('export_objects');
+				$objs[] = "SiteTree";
+
+				$this->config()->set('export_objects', $objs);
+			}
+		}
+	}
+
+	/**
+	 *
+	 */
 	public function init() {
 		parent::init();
 		
-		$canAccess = (Director::isDev() || Director::is_cli() || Permission::check("ADMIN"));
-		if(!$canAccess) return Security::permissionFailure($this);
+		$canAccess = (Director::isDev() || Director::is_cli());
+
+		if(!Permission::check("ADMIN") && !$canAccess) {
+			return Security::permissionFailure($this);
+		}
 	}
 		
-	
+	/**
+	 * @param string $action
+	 *
+	 * @return string 
+	 */
 	public function Link($action = null) {
-		return "StaticExporter/$action";
+		return "dev/staticexporter/$action";
+	}
+
+	/**
+	 * @param string $action
+	 *
+	 * @return string
+	 */
+	public function AbsoluteLink($action = null) {
+		return Director::absoluteURL($this->Link($action));
 	}
 	
+	/**
+	 * @return array
+	 */
 	public function index() {
 		return array(
 			'Title' => _t('StaticExporter.NAME','Static exporter'),
@@ -41,6 +96,9 @@ class StaticExporter extends Controller {
 		);
 	}
 	
+	/**
+	 * @return Form
+	 */
 	public function StaticExportForm() {
 		$form = new Form($this, 'StaticExportForm', new FieldList(
 			new TextField('baseurl', _t('StaticExporter.BASEURL','Base URL'))
@@ -53,9 +111,9 @@ class StaticExporter extends Controller {
 
 
 	public function export() {
-		
 		if(isset($_REQUEST['baseurl'])) {
 			$base = $_REQUEST['baseurl'];
+
 			if(substr($base,-1) != '/') $base .= '/';
 
 			Config::inst()->update('Director', 'alternate_base_url', $base);
@@ -118,17 +176,15 @@ class StaticExporter extends Controller {
 		}
 
 		// iterate through items we need to export
-		$objs = $this->getObjectsToExport();
+		$urls = $this->getExportUrls();
 
-		if($objs) {
-			$total = $objs->count();
+		if($urls) {
+			$total = count($urls);
 			$i = 1;
 
-			foreach($objs as $obj) {
-				$link = $obj->RelativeLink(null, true);
-
-				$subfolder   = "$folder/" . trim($link, '/');
-				$contentfile = "$folder/" . trim($link, '/') . '/index.html';
+			foreach($urls as $url) {
+				$subfolder   = "$folder/" . trim($url, '/');
+				$contentfile = "$folder/" . trim($url, '/') . '/index.html';
 				
 				// Make the folder				
 				if(!file_exists($subfolder)) {
@@ -137,14 +193,20 @@ class StaticExporter extends Controller {
 				
 				// Run the page
 				Requirements::clear();
-				$link = Director::makeRelative($obj->Link());
-
 				DataObject::flush_and_destroy_cache();
-				$response = Director::test($link);
+
+				$response = Director::test($url);
 
 				// Write to file
 				if($fh = fopen($contentfile, 'w')) {
-					if(!$quiet) printf("-- (%s/%s) Outputting page (%s)%s", $i, $total, $obj->RelativeLink(null, true), PHP_EOL);
+					if(!$quiet) {
+						printf("-- (%s/%s) Outputting page (%s)%s", 
+							$i, 
+							$total, 
+							$url, 
+							PHP_EOL
+						);
+					}
 
 					fwrite($fh, $response->getBody());
 					fclose($fh);
@@ -158,16 +220,34 @@ class StaticExporter extends Controller {
 	}
 
 	/**
-	 * Return a list of publishable instances for the exporter to include. The
-	 * only requirement is that for this list of objects, each one implements
-	 * the RelativeLink() and Link() method.
+	 * Return an array of urls to publish
 	 *
-	 * @return SS_List
+	 * @return array
 	 */
-	public function getObjectsToExport() {
-		$objs = SiteTree::get();
+	public function getExportUrls() {
+		$classes = $this->config()->get('export_objects');
+		$urls = array();
+
+		foreach($classes as $obj) {
+			$link = $obj->Link;
+
+			$urls[$link] = $link;
+		}
+
+		$this->extend('alterExportUrls', $urls);
+
+		// older api, keep around to ensure backwards compatibility
+		$objs = new ArrayList();
 		$this->extend('alterObjectsToExport', $objs);
 
-		return $objs;
+		if($objs) {
+			foreach($objs as $obj) {
+				$link = $obj->Link;
+
+				$urls[$link] = $link;
+			}
+		}
+
+		return $urls;
 	}
 }

@@ -3,4 +3,5 @@ Name: staticpublisherroutes
 ---
 Director:
   rules:
+    'dev/staticexporter': 'StaticExporter'
     'dev/buildcache': '->dev/tasks/RebuildStaticCacheTask'
