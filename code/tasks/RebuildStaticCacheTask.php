@@ -69,8 +69,6 @@ class RebuildStaticCacheTask extends BuildTask {
 
 		$urls = array_unique($urls);
 		sort($urls);
-
-		$mappedUrls = $page->urlsToPaths($urls);
 		
 		$start = isset($_GET['start']) ? $_GET['start'] : 0;
 		$count = isset($_GET['count']) ? $_GET['count'] : sizeof($urls);
@@ -80,6 +78,8 @@ class RebuildStaticCacheTask extends BuildTask {
 		}
 
 		$urls = array_slice($urls, $start, $count);
+
+		$mappedUrls = $page->urlsToPaths($urls);
 
 		if($removeAll && !isset($_GET['urls']) && $start == 0 && file_exists("../cache")) {
 			echo "Removing stale cache files... \n";
