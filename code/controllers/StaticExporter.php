@@ -47,10 +47,13 @@ class StaticExporter extends Controller {
 
 		if(class_exists('SiteTree')) {
 			if(!$this->config()->get('disable_sitetree_export')) {
-				$objs[] = $this->config()->get('export_objects');
-				$objs[] = "SiteTree";
-
-				$this->config()->set('export_objects', $objs);
+				$objs[] = $this->config()->export_objects;
+				
+				if(!in_array('SiteTree', $objs)) {
+					$objs[] = "SiteTree";
+				}
+				
+				$this->config()->export_objects = $objs;
 			}
 		}
 	}
