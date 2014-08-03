@@ -14,7 +14,7 @@ static files to both a local or remote server for increased site performance.
 
 ## Requirements
 
- * SilverStripe 3.1
+ * SilverStripe 3.1 or newer
  * Tar archive
 
 ## Documentation
