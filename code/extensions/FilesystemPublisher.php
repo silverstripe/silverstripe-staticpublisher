@@ -304,32 +304,6 @@ class FilesystemPublisher extends StaticPublisher {
 				);
 
 			}
-			
-			// Add externals
-			/*
-			$externals = $this->externalReferencesFor($content);
-			if($externals) foreach($externals as $external) {
-				// Skip absolute URLs
-				if(preg_match('/^[a-zA-Z]+:\/\//', $external)) continue;
-				// Drop querystring parameters
-				$external = strtok($external, '?');
-				
-				if(file_exists("../" . $external)) {
-					// Break into folder and filename
-					if(preg_match('/^(.*\/)([^\/]+)$/', $external, $matches)) {
-						$files[$external] = array(
-							"Copy" => "../$external",
-							"Folder" => $matches[1],
-							"Filename" => $matches[2],
-						);
-					
-					} else {
-						user_error("Can't parse external: $external", E_USER_WARNING);
-					}
-				} else {
-					$missingFiles[$external] = true;
-				}
-			}*/
 		}
 
 		//return config to its previous state
