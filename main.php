@@ -22,10 +22,24 @@
  */
 
 require_once('../framework/core/Constants.php');
- 
-$cacheEnabled = true;
-$cacheDebug = false;
-$cacheBaseDir = '../cache/'; // Should point to the same folder as FilesystemPublisher->destFolder
+
+if(defined('SS_STATICPUBLISHER_ENABLED')) {
+	$cacheEnabled = SS_STATICPUBLISHER_ENABLED;
+} else {
+	$cacheEnabled = true;
+}
+
+if(defined('SS_STATICPUBLISHER_CACHEDIR')) {
+	$cacheBaseDir = SS_STATICPUBLISHER_CACHEDIR;
+} else {
+	$cacheBaseDir = '../cache/';
+}
+
+if(defined('SS_STATICPUBLISHER_DEBUG')) {
+	$cacheDebug = SS_STATICPUBLISHER_DEBUG;
+} else {
+	$cacheDebug = false;
+}
 
 // Optional settings for FilesystemPublisher::$domain_based_mapping=TRUE
 $hostmapLocation = '../subsites/host-map.php'; 
