@@ -4,6 +4,8 @@
  */ 
 class RebuildStaticCacheTask extends BuildTask {
 
+	private static $quiet = false;
+
 	public function run($request) {
 		Config::inst()->update('StaticPublisher', 'echo_progress', true);
 		
@@ -25,6 +27,16 @@ class RebuildStaticCacheTask extends BuildTask {
 		
 		$this->rebuildCache($urls, true);
 	}
+
+	public function log($message) {
+		$quiet = Config::inst()->get('RebuildStaticCacheTask', 'quiet');
+
+		if($quiet) {
+			return;
+		}
+
+		echo $message;
+	}
 	
 	/**
 	 * Rebuilds the static cache for the pages passed through via $urls
@@ -40,9 +52,10 @@ class RebuildStaticCacheTask extends BuildTask {
 			return;
 		}; 
 		
-		if(!Director::is_cli()) echo "<pre>\n";
-
-		echo "Rebuilding cache.\nNOTE: Please ensure that this page ends with 'Done!' - if not, then something may have gone wrong.\n\n";
+		if(!Director::is_cli()) {
+			$this->log("<pre>\n");
+			$this->log("Rebuilding cache.\nNOTE: Please ensure that this page ends with 'Done!' - if not, then something may have gone wrong.\n\n");
+		}
 
 		$page = singleton('Page');
 		$cacheBaseDir = $page->getDestDir();
@@ -51,8 +64,12 @@ class RebuildStaticCacheTask extends BuildTask {
 			Filesystem::makeFolder($cacheBaseDir);
 		}
 		
-		if (file_exists($cacheBaseDir.'/lock') && !isset($_REQUEST['force'])) {
-			die("There already appears to be a publishing queue running. You can skip warning this by adding ?/&force to the URL.");
+		$quiet = Config::inst()->get('RebuildStaticCacheTask', 'quiet');
+
+		if(!$quiet) {
+			if (file_exists($cacheBaseDir.'/lock') && !isset($_REQUEST['force'])) {
+				die("There already appears to be a publishing queue running. You can skip warning this by adding ?/&force to the URL.");
+			}
 		}
 		
 		touch($cacheBaseDir.'/lock');
@@ -82,7 +99,8 @@ class RebuildStaticCacheTask extends BuildTask {
 		$mappedUrls = $page->urlsToPaths($urls);
 
 		if($removeAll && !isset($_GET['urls']) && $start == 0 && file_exists("../cache")) {
-			echo "Removing stale cache files... \n";
+			$this->log("Removing stale cache files... \n");
+
 			flush();
 
 			if (Config::inst()->get('FilesystemPublisher', 'domain_based_caching')) {
@@ -92,24 +110,24 @@ class RebuildStaticCacheTask extends BuildTask {
 						$searchCacheFile = trim(str_replace($cacheBaseDir, '', $cacheFile), '\/');
 						
 						if (!in_array($searchCacheFile, $mappedUrls)) {
-							echo " * Deleting $cacheFile\n";
+							$this->log(" * Deleting $cacheFile\n");
+							
 							@unlink($cacheFile);
 						}
 					}
 				}
 			}
-
-			echo "done.\n\n";
+			
+			$this->log("done.\n\n");
 		}
 
-		echo  "Rebuilding cache from " . sizeof($mappedUrls) . " urls...\n\n";
-		
+		$this->log("Rebuilding cache from " . sizeof($mappedUrls) . " urls...\n\n");
 		$page->extend('publishPages', $mappedUrls);
 		
 		if (file_exists($cacheBaseDir.'/lock')) {
 			unlink($cacheBaseDir.'/lock');
 		}
 		
-		echo "\n\n== Done! ==\n";
+		$this->log("\n\n== Done! ==\n");
 	}
 }
