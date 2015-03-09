@@ -7,7 +7,11 @@ class RebuildStaticCacheTask extends BuildTask {
 	private static $quiet = false;
 
 	public function run($request) {
-		Config::inst()->update('StaticPublisher', 'echo_progress', true);
+		if(Config::inst()->get('RebuildStaticCacheTask', 'quiet')) {
+			Config::inst()->update('StaticPublisher', 'echo_progress', false);
+		} else {
+			Config::inst()->update('StaticPublisher', 'echo_progress', true);
+		}
 		
 		$page = singleton('Page');
 
@@ -28,7 +32,7 @@ class RebuildStaticCacheTask extends BuildTask {
 		$this->rebuildCache($urls, true);
 	}
 
-	public function log($message) {
+	public function log($message = null) {
 		$quiet = Config::inst()->get('RebuildStaticCacheTask', 'quiet');
 
 		if($quiet) {
@@ -101,7 +105,9 @@ class RebuildStaticCacheTask extends BuildTask {
 		if($removeAll && !isset($_GET['urls']) && $start == 0 && file_exists("../cache")) {
 			$this->log("Removing stale cache files... \n");
 
-			flush();
+			if(!$quiet) {
+				flush();
+			}
 
 			if (Config::inst()->get('FilesystemPublisher', 'domain_based_caching')) {
 				// Glob each dir, then glob each one of those
