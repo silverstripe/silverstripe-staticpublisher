@@ -61,6 +61,7 @@ if (
 	&& count(array_diff(array_keys($_GET), array('url', 'cacheSubdir'))) == 0
 	// Request is not POST (which would have to be handled dynamically)
 	&& count($_POST) == 0
+	&& count($_GET) <= 1
 ) {
 	// Define system paths (copied from Core.php)
 	if(!defined('BASE_PATH')) {
