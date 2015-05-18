@@ -65,11 +65,13 @@ class RsyncMultiHostPublisher extends FilesystemPublisher {
 		if(isset($_GET['norsync']) && $_GET['norsync']) return;
 		
 		$extraArg = "";
-		if($this->config()->excluded_folders) foreach($this->config()->excluded_folders as $folder) {
+		$excludedFolders = Config::inst()->get('RsyncMultiHostPublisher', 'excluded_folders');
+		if($excludedFolders) foreach($excludedFolders as $folder) {
 			$extraArg .= " --exclude " . escapeshellarg($folder);
 		}
 		
-		foreach((array)$this->config()->targets as $target) {
+		$targets = Config::inst()->get('RsyncMultiHostPublisher', 'targets');
+		foreach((array)$targets as $target) {
 			// Transfer non-PHP content from everything to the target; that will ensure that we have all the JS/CSS/etc
 			$rsyncOutput = `cd $base; rsync -av -e ssh --exclude /.htaccess --exclude /web.config --exclude '*.php' --exclude '*.svn' --exclude '*.git' --exclude '*~' $extraArg --delete . $target`;
 			// Then transfer "safe" PHP from the cache/ directory
