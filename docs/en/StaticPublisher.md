@@ -207,7 +207,7 @@ RewriteRule .* staticpublisher/main.php?url=%1&%{QUERY_STRING} [L]
 ### SILVERSTRIPE END ###
 ```
 
-*  We use a simple PHP script, `static-main.php`, to control cache lookup. This
+*  We use a simple PHP script, `staticpublisher/main.php`, to control cache lookup. This
 makes the `.htaccess` update simpler.
 
 Just look for this line:
@@ -216,7 +216,7 @@ Just look for this line:
 RewriteRule .* framework/main.php?url=%1&%{QUERY_STRING} [L]
 ```
 
-And change the PHP script from `main.php` to `static-main.php`:
+And change the PHP script from `framework/main.php` to `staticpublisher/main.php`:
 
 ```
 RewriteRule .* staticpublisher/main.php?url=%1&%{QUERY_STRING} [L]
