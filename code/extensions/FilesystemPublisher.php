@@ -158,6 +158,10 @@ class FilesystemPublisher extends StaticPublisher {
  	 *               - "path": The filesystem path where the cache has been written
  	 */
 	public function publishPages($urls) { 
+		// Save current stage and temporarily force it to Live
+		$oldStage = Versioned::current_stage();
+		Versioned::reading_stage("Live");
+        
 		$result = array();
 
 		//nest the config so we can make changes to the config and revert easily
@@ -325,6 +329,9 @@ class FilesystemPublisher extends StaticPublisher {
 				copy($file['Copy'], $path);
 			}
 		}
+
+		// Revert the stage back to what it was
+		Versioned::reading_stage($oldStage);
 
 		return $result;
 	}
