@@ -114,7 +114,7 @@ class RebuildStaticCacheTask extends BuildTask
 
             if (Config::inst()->get('FilesystemPublisher', 'domain_based_caching')) {
                 // Glob each dir, then glob each one of those
-                foreach (glob(BASE_PATH . '/cache/*', GLOB_ONLYDIR) as $cacheDir) {
+                foreach (glob($cacheBaseDir .'/*', GLOB_ONLYDIR) as $cacheDir) {
                     foreach (glob($cacheDir.'/*') as $cacheFile) {
                         $searchCacheFile = trim(str_replace($cacheBaseDir, '', $cacheFile), '\/');
                         
