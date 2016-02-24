@@ -11,7 +11,13 @@ class FilesystemPublisherTest extends SapphireTest
     protected $usesDatabase = true;
     
     protected $orig = array();
-    
+
+    protected $requiredExtensions = array(
+        'SiteTree' => array(
+            'StaticPublisherTest_SiteTreeDecorator',
+        ),
+    );
+
     public function setUp()
     {
         parent::setUp();
@@ -258,4 +264,13 @@ class StaticPublisherTestPage_Controller extends Page_Controller implements Test
         $response->addHeader('Content-Type', 'application/json');
         return $response;
     }
+}
+
+class StaticPublisherTest_SiteTreeDecorator extends DataExtension implements TestOnly
+{
+
+    public function allPagesToCache() {
+        return array();
+    }
+
 }
