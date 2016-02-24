@@ -134,8 +134,8 @@ if (
 		header("Etag: $etagFile");
 		header('Cache-Control: public');
 		header('X-SilverStripe-Cache: hit at '.@date('r'));
-		
-		if (@strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE'])==$lastModified || $etagHeader == $etagFile) {
+
+		if (($ifModifiedSince && @strtotime($ifModifiedSince)==$lastModified) || $etagHeader == $etagFile) {
 		       header("HTTP/1.1 304 Not Modified");
 		       exit;
 		}
@@ -162,6 +162,10 @@ if (
 	}
 } else {
 	// Fall back to dynamic generation via normal routing if caching has been explicitly disabled
+    header('X-SilverStripe-Cache: skipped at '.@date('r'));
+    if ($cacheDebug) {
+        echo "<h1>Cache skipped</h1>";
+    }
 	skipCache();
 }
 
