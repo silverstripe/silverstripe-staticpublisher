@@ -25,7 +25,7 @@ case.
 
 If you're logged into your site as an administrator or your website is in 
 development mode, you can access the GUI for generating the export at:
-http://yoursite.com/StaticExporter/. The GUI allows you to select a few
+http://yoursite.com/dev/staticexporter/. The GUI allows you to select a few
 configuration options then will generate a tar.gz archive of the website.
 
 ### StaticExporterTask
