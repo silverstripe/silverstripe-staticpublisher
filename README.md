@@ -2,6 +2,8 @@
 
 [![Build Status](https://secure.travis-ci.org/silverstripe-labs/silverstripe-staticpublisher.png?branch=master)](http://travis-ci.org/silverstripe-labs/silverstripe-staticpublisher)
 
+**This module is unmaintained, please use [silverstripe/staticpublishqueue](https://github.com/silverstripe/silverstripe-staticpublishqueue) instead**
+
 ## Introduction
 
 This module provides an extension for exporting a SilverStripe application as 
